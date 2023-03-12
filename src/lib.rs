@@ -2,6 +2,7 @@ use erised::ToReflect;
 
 #[allow(dead_code)]
 pub struct PlainStruct {
+    /// This is comment
     tuple_str: TupleStruct,
     unit: UnitStruct,
 
@@ -14,18 +15,29 @@ pub struct PlainStruct {
     mut_borrowed: &'static mut str,
 
     enumerated: Enum,
+    enum_with_disc: EnumWithDisc,
 }
 
+/// This is struct comment
 pub struct TupleStruct(String);
 
+/// This is unit comment
 pub struct UnitStruct;
 
 pub enum Enum {
-    // WithDiscr = 2,
+    /// This is variant doc
     Unit,
     One(i32),
     Seq(i32, i32),
-    Map { a: i32, b: i32 },
+    Map {
+        a: i32,
+        /// This is field doc
+        b: i32,
+    },
+}
+
+pub enum EnumWithDisc {
+    WithDiscr = 2,
 }
 
 impl ToReflect for PlainStruct {}
@@ -36,15 +48,18 @@ fn test() {
     match PlainStruct::TYPE_INFO {
         erised::TypeInfo::Struct(strukt) => {
             assert_eq!(strukt.name, "crate::PlainStruct");
-            assert_eq!(strukt.fields.len(), 9);
+            assert_eq!(strukt.fields.len(), 10);
             assert_eq!(
                 strukt.fields[0],
                 erised::StructFieldInfo {
                     name: "tuple_str",
+                    docs: Some("This is comment"),
                     ty: erised::TypeInfo::TupleStruct(erised::TupleStructInfo {
                         name: "crate::TupleStruct",
+                        docs: Some("This is struct comment"),
                         fields: &[erised::TypeInfo::Primitive(erised::Primitive {
-                            name: "alloc::string::String"
+                            name: "alloc::string::String",
+                            docs: None
                         })]
                     })
                 }
@@ -53,7 +68,9 @@ fn test() {
                 strukt.fields[1],
                 erised::StructFieldInfo {
                     name: "unit",
+                    docs: None,
                     ty: erised::TypeInfo::Primitive(erised::Primitive {
+                        docs: Some("This is unit comment"),
                         name: "crate::UnitStruct"
                     })
                 }
@@ -62,13 +79,16 @@ fn test() {
                 strukt.fields[2],
                 erised::StructFieldInfo {
                     name: "tuple",
+                    docs: None,
                     ty: erised::TypeInfo::Tuple(erised::TupleInfo {
                         fields: &[
                             erised::TypeInfo::Primitive(erised::Primitive {
-                                name: "alloc::string::String"
+                                name: "alloc::string::String",
+                                docs: None
                             }),
                             erised::TypeInfo::Primitive(erised::Primitive {
-                                name: "alloc::string::String"
+                                name: "alloc::string::String",
+                                docs: None
                             })
                         ]
                     })
@@ -84,13 +104,20 @@ fn test() {
             };
             assert_eq!(
                 array_ty,
-                erised::TypeInfo::Primitive(erised::Primitive { name: "i32" })
+                erised::TypeInfo::Primitive(erised::Primitive {
+                    name: "i32",
+                    docs: None
+                })
             );
             assert_eq!(
                 strukt.fields[4],
                 erised::StructFieldInfo {
                     name: "primitive",
-                    ty: erised::TypeInfo::Primitive(erised::Primitive { name: "i32" })
+                    docs: None,
+                    ty: erised::TypeInfo::Primitive(erised::Primitive {
+                        name: "i32",
+                        docs: None
+                    })
                 }
             );
             assert_eq!(strukt.fields[5].name, "recurse");
@@ -119,7 +146,10 @@ fn test() {
             };
             assert_eq!(
                 borrow_ty,
-                erised::TypeInfo::Primitive(erised::Primitive { name: "str" })
+                erised::TypeInfo::Primitive(erised::Primitive {
+                    name: "str",
+                    docs: None
+                })
             );
             assert_eq!(strukt.fields[7].name, "mut_borrowed");
             let borrow_ty = match strukt.fields[7].ty {
@@ -136,47 +166,86 @@ fn test() {
             };
             assert_eq!(
                 borrow_ty,
-                erised::TypeInfo::Primitive(erised::Primitive { name: "str" })
+                erised::TypeInfo::Primitive(erised::Primitive {
+                    name: "str",
+                    docs: None
+                })
             );
             assert_eq!(
                 strukt.fields[8],
                 erised::StructFieldInfo {
                     name: "enumerated",
+                    docs: None,
                     ty: erised::TypeInfo::Enum(erised::EnumInfo {
                         name: "crate::Enum",
+                        docs: None,
                         variants: &[
-                            erised::VariantInfo::Unit { name: "Unit" },
+                            erised::VariantInfo::Unit {
+                                name: "Unit",
+                                discr: None,
+                                docs: Some("This is variant doc")
+                            },
                             erised::VariantInfo::Tuple {
                                 name: "One",
+                                docs: None,
                                 fields: &[erised::TypeInfo::Primitive(erised::Primitive {
-                                    name: "i32"
+                                    name: "i32",
+                                    docs: None
                                 })]
                             },
                             erised::VariantInfo::Tuple {
                                 name: "Seq",
+                                docs: None,
                                 fields: &[
-                                    erised::TypeInfo::Primitive(erised::Primitive { name: "i32" }),
-                                    erised::TypeInfo::Primitive(erised::Primitive { name: "i32" })
+                                    erised::TypeInfo::Primitive(erised::Primitive {
+                                        name: "i32",
+                                        docs: None
+                                    }),
+                                    erised::TypeInfo::Primitive(erised::Primitive {
+                                        name: "i32",
+                                        docs: None
+                                    })
                                 ]
                             },
                             erised::VariantInfo::Struct {
                                 name: "Map",
+                                docs: None,
                                 fields: &[
                                     erised::StructFieldInfo {
                                         name: "a",
+                                        docs: None,
                                         ty: erised::TypeInfo::Primitive(erised::Primitive {
-                                            name: "i32"
+                                            name: "i32",
+                                            docs: None
                                         })
                                     },
                                     erised::StructFieldInfo {
                                         name: "b",
+                                        docs: Some("This is field doc"),
                                         ty: erised::TypeInfo::Primitive(erised::Primitive {
-                                            name: "i32"
+                                            name: "i32",
+                                            docs: None
                                         })
                                     },
                                 ]
                             }
                         ]
+                    })
+                }
+            );
+            assert_eq!(
+                strukt.fields[9],
+                erised::StructFieldInfo {
+                    name: "enum_with_disc",
+                    docs: None,
+                    ty: erised::TypeInfo::Enum(erised::EnumInfo {
+                        name: "crate::EnumWithDisc",
+                        docs: None,
+                        variants: &[erised::VariantInfo::Unit {
+                            name: "WithDiscr",
+                            docs: None,
+                            discr: Some("2")
+                        }]
                     })
                 }
             );

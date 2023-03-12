@@ -21,16 +21,19 @@ pub enum TypeInfo {
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub struct Primitive {
     pub name: &'static str,
+    pub docs: Option<&'static str>,
 }
 
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub struct StructInfo {
+    pub docs: Option<&'static str>,
     pub name: &'static str,
     pub fields: &'static [StructFieldInfo],
 }
 
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub struct TupleStructInfo {
+    pub docs: Option<&'static str>,
     pub name: &'static str,
     pub fields: &'static [TypeInfo],
 }
@@ -62,11 +65,13 @@ pub struct BorrowInfo {
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub struct StructFieldInfo {
     pub name: &'static str,
+    pub docs: Option<&'static str>,
     pub ty: TypeInfo,
 }
 
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub struct EnumInfo {
+    pub docs: Option<&'static str>,
     pub name: &'static str,
     pub variants: &'static [VariantInfo],
 }
@@ -75,13 +80,17 @@ pub struct EnumInfo {
 pub enum VariantInfo {
     Unit {
         name: &'static str,
+        docs: Option<&'static str>,
+        discr: Option<&'static str>,
     },
     Tuple {
         name: &'static str,
+        docs: Option<&'static str>,
         fields: &'static [TypeInfo],
     },
     Struct {
         name: &'static str,
+        docs: Option<&'static str>,
         fields: &'static [StructFieldInfo],
     },
 }

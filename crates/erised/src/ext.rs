@@ -1,3 +1,5 @@
+use proc_macro2::TokenStream;
+use quote::ToTokens;
 use rustdoc_types::{GenericArgs, Impl, ItemEnum, Path, Struct, Type, Variant};
 
 macro_rules! matches {
@@ -7,6 +9,19 @@ macro_rules! matches {
             _ => None,
         }
     };
+}
+
+pub trait OptionExt {
+    fn quote(&self) -> TokenStream;
+}
+
+impl<T: ToTokens> OptionExt for Option<T> {
+    fn quote(&self) -> TokenStream {
+        match self {
+            Some(o) => quote::quote!(Some(#o)),
+            None => quote::quote!(None),
+        }
+    }
 }
 
 pub trait ItemEnumExt {
