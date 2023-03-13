@@ -1,5 +1,3 @@
-use erised::ToReflect;
-
 #[allow(dead_code)]
 pub struct PlainStruct {
     /// This is comment
@@ -40,7 +38,16 @@ pub enum EnumWithDisc {
     WithDiscr = 2,
 }
 
-impl ToReflect for PlainStruct {}
+pub trait MyTrait {
+    type Foo;
+    const FOO: &'static str;
+    fn my_trait_method(&self, arg: PlainStruct) -> EnumWithDisc;
+    fn static_method(arg: PlainStruct);
+}
+
+pub fn to_reflect(_: impl MyTrait, _: PlainStruct) -> erised::ToReflect {
+    erised::ToReflect
+}
 
 #[test]
 fn test() {

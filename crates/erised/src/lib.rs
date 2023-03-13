@@ -5,7 +5,8 @@ use ext::{ItemEnumExt, OptionBoxGenericArgsExt};
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 use rustdoc_types::{
-    Crate, GenericArg, GenericArgs, Id, Item, ItemEnum, StructKind, Type, VariantKind,
+    Crate, Enum, Function, GenericArg, GenericArgs, GenericBound, Id, Item, ItemEnum, Struct,
+    StructKind, Type, VariantKind,
 };
 
 use crate::ext::{OptionExt, TypeExt};
@@ -64,13 +65,31 @@ impl Mirror {
             .index
             .iter()
             .filter_map(|(_, item)| {
-                let item_impl = item.inner.as_impl()?;
-                if item_impl.trait_.as_ref()?.id == *reflect_id {
-                    let ty_ = item_impl.for_.as_resolved_path()?;
-                    Some(ty_.id.clone())
-                } else {
-                    None
+                let fn_ = item.inner.as_fn()?;
+                if let Some(out) = fn_.decl.output.as_ref() {
+                    let out = out.as_resolved_path()?;
+                    if &out.id == reflect_id {
+                        return Some(fn_);
+                    }
                 }
+                None
+            })
+            .flat_map(|fn_| {
+                fn_.decl.inputs.iter().flat_map(|(_, input)| match input {
+                    Type::ImplTrait(bounds) => bounds
+                        .iter()
+                        .filter_map(|bound| match bound {
+                            GenericBound::TraitBound {
+                                trait_,
+                                generic_params: _,
+                                modifier: _,
+                            } => Some(trait_.id.clone()),
+                            _ => None,
+                        })
+                        .collect(),
+                    Type::ResolvedPath(path) => vec![path.id.clone()],
+                    _ => vec![],
+                })
             })
             .filter_map(|id| krate.index.get(&id))
             .cloned()
@@ -164,7 +183,8 @@ impl Mirror {
                 }
             }
             Type::DynTrait(_) => todo!("Dyn trait"),
-            Type::Generic(_) => todo!("Generic"),
+            Type::Generic(gen) if gen == "Self" => Ok(quote!(erised::TypeInfo::Self_)),
+            Type::Generic(_gen) => todo!("Generic {ty:?}"),
             Type::Primitive(field_ty) => Ok(quote!(
                     erised::TypeInfo::Primitive(
                         erised::Primitive {
@@ -225,170 +245,299 @@ impl Mirror {
         }
     }
 
+    fn reflect_struct(
+        &self,
+        queue: &mut Vec<Item>,
+        strukt: &Struct,
+        name: &String,
+        docs: TokenStream,
+    ) -> anyhow::Result<TokenStream> {
+        match &strukt.kind {
+            StructKind::Unit => Ok(quote!(
+                erised::TypeInfo::Primitive(
+                    erised::Primitive {
+                        name: #name,
+                        docs: #docs
+                    }
+                )
+            )),
+            StructKind::Tuple(fields) => {
+                let mut field_info: Vec<TokenStream> = vec![];
+                for field in fields.iter().filter_map(|f| f.as_ref()) {
+                    let item = self.krate.index.get(&field).context("struct field")?;
+                    let field_inner = item.inner.as_struct_field().context("Struct field")?;
+
+                    field_info.push(self.reflect_type(queue, field_inner)?);
+                }
+                Ok(quote!(
+                    erised::TypeInfo::TupleStruct(erised::TupleStructInfo {
+                        name: #name,
+                        docs: #docs,
+                        fields: &[
+                            #(#field_info),*
+                        ]
+                    })
+                ))
+            }
+            StructKind::Plain { fields, .. } => {
+                let mut field_info = vec![];
+
+                for field in fields {
+                    if let Some(field) = self.krate.index.get(&field) {
+                        let field_name = self
+                            .get_full_name(&field.id, &field.name)
+                            .context("Field name")?;
+                        let field_inner = field.inner.as_struct_field().context("Struct field")?;
+
+                        let docs = field.docs.quote();
+                        let ty = self.reflect_type(queue, field_inner)?;
+
+                        field_info.push(quote!(
+                           erised::StructFieldInfo {
+                                name: #field_name,
+                                docs: #docs,
+                                ty: #ty
+                            }
+                        ));
+                    }
+                }
+
+                Ok(quote!(
+                    erised::TypeInfo::Struct(erised::StructInfo {
+                        name: #name,
+                        docs: #docs,
+                        fields: &[
+                            #(#field_info),*
+                        ]
+                    })
+                ))
+            }
+        }
+    }
+
+    fn reflect_enum(
+        &self,
+        queue: &mut Vec<Item>,
+        enumerated: &Enum,
+        name: &String,
+        docs: TokenStream,
+    ) -> anyhow::Result<TokenStream> {
+        let mut variant_info = vec![];
+        for variant in &enumerated.variants {
+            if let Some(variant) = self.krate.index.get(&variant) {
+                let variant_name = variant.name.as_deref().unwrap_or_default();
+                let variant_inner = variant.inner.as_variant().context("Variant")?;
+                let discr = variant_inner.discriminant.as_ref().map(|d| &d.expr).quote();
+                let docs = variant.docs.quote();
+
+                match &variant_inner.kind {
+                    VariantKind::Plain => {
+                        variant_info.push(quote!(
+                            erised::VariantInfo::Unit {
+                                name: #variant_name,
+                                docs: #docs,
+                                discr: #discr
+                            }
+                        ));
+                    }
+                    VariantKind::Tuple(fields) => {
+                        let mut field_info: Vec<TokenStream> = vec![];
+                        for field in fields.iter().filter_map(|f| f.as_ref()) {
+                            let item = self.krate.index.get(&field).context("struct field")?;
+                            let field_inner =
+                                item.inner.as_struct_field().context("Struct field")?;
+
+                            field_info.push(self.reflect_type(queue, field_inner)?);
+                        }
+                        variant_info.push(quote! {
+                            erised::VariantInfo::Tuple {
+                                name: #variant_name,
+                                docs: #docs,
+                                fields: &[
+                                    #(#field_info),*
+                                ]
+                            }
+                        })
+                    }
+                    VariantKind::Struct {
+                        fields,
+                        fields_stripped: _,
+                    } => {
+                        let mut field_info: Vec<TokenStream> = vec![];
+                        for field in fields {
+                            if let Some(field) = self.krate.index.get(&field) {
+                                let field_name = self
+                                    .get_full_name(&field.id, &field.name)
+                                    .context("Field name")?;
+                                let field_inner =
+                                    field.inner.as_struct_field().context("Struct field")?;
+
+                                let ty = self.reflect_type(queue, field_inner)?;
+
+                                let docs = field.docs.quote();
+
+                                field_info.push(quote!(
+                                   erised::StructFieldInfo {
+                                        name: #field_name,
+                                        docs: #docs,
+                                        ty: #ty
+                                    }
+                                ));
+                            }
+                        }
+                        variant_info.push(quote!(
+                           erised::VariantInfo::Struct {
+                                name: #variant_name,
+                                docs: #docs,
+                                fields: &[
+                                    #(#field_info),*
+                                ]
+                            }
+                        ));
+                    }
+                }
+            }
+        }
+        Ok(quote!(
+            erised::TypeInfo::Enum(erised::EnumInfo {
+                name: #name,
+                docs: #docs,
+                variants: &[
+                    #(#variant_info),*
+                ]
+            })
+        ))
+    }
+
+    fn reflect_function(
+        &self,
+        queue: &mut Vec<Item>,
+        func: &Function,
+        name: &String,
+        docs: TokenStream,
+    ) -> anyhow::Result<TokenStream> {
+        let mut inputs: Vec<TokenStream> = vec![];
+        for (input_name, input) in &func.decl.inputs {
+            let ty = self.reflect_type(queue, input)?;
+            inputs.push(quote!(
+               erised::FunctionArg {
+                   name: #input_name,
+                   ty: #ty
+               }
+            ));
+        }
+        let output = func
+            .decl
+            .output
+            .as_ref()
+            .map(|out| self.reflect_type(queue, &out))
+            .transpose()?
+            .quote();
+        Ok(quote!(
+            erised::FunctionInfo {
+                name: #name,
+                docs: #docs,
+                inputs: &[#(#inputs),*],
+                output: #output
+            }
+        ))
+    }
+
+    fn reflect_trait(
+        &self,
+        queue: &mut Vec<Item>,
+        trait_: &rustdoc_types::Trait,
+        name: &String,
+        docs: TokenStream,
+    ) -> anyhow::Result<TokenStream> {
+        let mut methods = vec![];
+        let mut consts: Vec<TokenStream> = vec![];
+        let mut assoc_types: Vec<TokenStream> = vec![];
+        for item in &trait_.items {
+            if let Some(item) = self.krate.index.get(item) {
+                let name = item.name.as_deref().unwrap_or_default();
+                let docs = item.docs.quote();
+
+                match &item.inner {
+                    ItemEnum::Function(func) => {
+                        methods.push(self.reflect_function(
+                            queue,
+                            func,
+                            &name.to_string(),
+                            docs,
+                        )?);
+                    }
+                    ItemEnum::AssocType {
+                        generics,
+                        bounds,
+                        default,
+                    } => {
+                        assoc_types.push(quote!(erised::AssocTypeInfo {
+                            name: #name,
+                            docs: #docs,
+                        }));
+                    }
+                    ItemEnum::AssocConst { type_, default: _ } => {
+                        let ty = self.reflect_type(queue, &type_)?;
+                        consts.push(quote!(erised::ConstInfo {
+                            name: #name,
+                            docs: #docs,
+                            ty: #ty
+                        }));
+                    }
+                    _ => todo!(),
+                }
+            }
+        }
+        Ok(quote!(erised::TypeInfo::Trait(erised::TraitInfo {
+            name: #name,
+            docs: #docs,
+            methods: &[#(#methods),*],
+            consts: &[#(#consts),*],
+            assoc_types: &[#(#assoc_types),*],
+        })))
+    }
+
     fn reflect_item(&self, queue: &mut Vec<Item>, item: &Item) -> anyhow::Result<TokenStream> {
         let name = self
             .get_full_name(&item.id, &item.name)
             .context("Item name")?;
 
+        let item_path = self.get_path(&item.id).context("Item path")?;
+
         let docs = item.docs.quote();
 
         match &item.inner {
-            ItemEnum::Struct(strukt) => match &strukt.kind {
-                StructKind::Unit => Ok(quote!(
-                    erised::TypeInfo::Primitive(
-                        erised::Primitive {
-                            name: #name,
-                            docs: #docs
-                        }
-                    )
-                )),
-                StructKind::Tuple(fields) => {
-                    let mut field_info: Vec<TokenStream> = vec![];
-                    for field in fields.iter().filter_map(|f| f.as_ref()) {
-                        let item = self.krate.index.get(&field).context("struct field")?;
-                        let field_inner = item.inner.as_struct_field().context("Struct field")?;
-
-                        field_info.push(self.reflect_type(queue, field_inner)?);
-                    }
-                    Ok(quote!(
-                        erised::TypeInfo::TupleStruct(erised::TupleStructInfo {
-                            name: #name,
-                            docs: #docs,
-                            fields: &[
-                                #(#field_info),*
-                            ]
-                        })
-                    ))
-                }
-                StructKind::Plain { fields, .. } => {
-                    let mut field_info = vec![];
-
-                    for field in fields {
-                        if let Some(field) = self.krate.index.get(&field) {
-                            let field_name = self
-                                .get_full_name(&field.id, &field.name)
-                                .context("Field name")?;
-                            let field_inner =
-                                field.inner.as_struct_field().context("Struct field")?;
-
-                            let docs = field.docs.quote();
-                            let ty = self.reflect_type(queue, field_inner)?;
-
-                            field_info.push(quote!(
-                               erised::StructFieldInfo {
-                                    name: #field_name,
-                                    docs: #docs,
-                                    ty: #ty
-                                }
-                            ));
-                        }
-                    }
-
-                    Ok(quote!(
-                        erised::TypeInfo::Struct(erised::StructInfo {
-                            name: #name,
-                            docs: #docs,
-                            fields: &[
-                                #(#field_info),*
-                            ]
-                        })
-                    ))
-                }
-            },
-            ItemEnum::StructField(_) => todo!(),
-            ItemEnum::Enum(enumerated) => {
-                let mut variant_info = vec![];
-                for variant in &enumerated.variants {
-                    if let Some(variant) = self.krate.index.get(&variant) {
-                        let variant_name = variant.name.as_deref().unwrap_or_default();
-                        let variant_inner = variant.inner.as_variant().context("Variant")?;
-                        let discr = variant_inner.discriminant.as_ref().map(|d| &d.expr).quote();
-                        let docs = variant.docs.quote();
-
-                        match &variant_inner.kind {
-                            VariantKind::Plain => {
-                                variant_info.push(quote!(
-                                    erised::VariantInfo::Unit {
-                                        name: #variant_name,
-                                        docs: #docs,
-                                        discr: #discr
-                                    }
-                                ));
-                            }
-                            VariantKind::Tuple(fields) => {
-                                let mut field_info: Vec<TokenStream> = vec![];
-                                for field in fields.iter().filter_map(|f| f.as_ref()) {
-                                    let item =
-                                        self.krate.index.get(&field).context("struct field")?;
-                                    let field_inner =
-                                        item.inner.as_struct_field().context("Struct field")?;
-
-                                    field_info.push(self.reflect_type(queue, field_inner)?);
-                                }
-                                variant_info.push(quote! {
-                                    erised::VariantInfo::Tuple {
-                                        name: #variant_name,
-                                        docs: #docs,
-                                        fields: &[
-                                            #(#field_info),*
-                                        ]
-                                    }
-                                })
-                            }
-                            VariantKind::Struct {
-                                fields,
-                                fields_stripped: _,
-                            } => {
-                                let mut field_info: Vec<TokenStream> = vec![];
-                                for field in fields {
-                                    if let Some(field) = self.krate.index.get(&field) {
-                                        let field_name = self
-                                            .get_full_name(&field.id, &field.name)
-                                            .context("Field name")?;
-                                        let field_inner = field
-                                            .inner
-                                            .as_struct_field()
-                                            .context("Struct field")?;
-
-                                        let ty = self.reflect_type(queue, field_inner)?;
-
-                                        let docs = field.docs.quote();
-
-                                        field_info.push(quote!(
-                                           erised::StructFieldInfo {
-                                                name: #field_name,
-                                                docs: #docs,
-                                                ty: #ty
-                                            }
-                                        ));
-                                    }
-                                }
-                                variant_info.push(quote!(
-                                   erised::VariantInfo::Struct {
-                                        name: #variant_name,
-                                        docs: #docs,
-                                        fields: &[
-                                            #(#field_info),*
-                                        ]
-                                    }
-                                ));
-                            }
-                        }
-                    }
-                }
+            ItemEnum::Struct(strukt) => {
+                let type_info = self.reflect_struct(queue, strukt, &name, docs)?;
                 Ok(quote!(
-                    erised::TypeInfo::Enum(erised::EnumInfo {
-                        name: #name,
-                        docs: #docs,
-                        variants: &[
-                            #(#variant_info),*
-                        ]
-                    })
+                    impl Reflect for #item_path {
+                        const TYPE_INFO: erised::TypeInfo = #type_info;
+                    }
                 ))
             }
+            ItemEnum::Enum(enumerated) => {
+                let type_info = self.reflect_enum(queue, enumerated, &name, docs)?;
+                Ok(quote!(
+                    impl Reflect for #item_path {
+                        const TYPE_INFO: erised::TypeInfo = #type_info;
+                    }
+                ))
+            }
+            ItemEnum::Trait(trait_) => {
+                let type_info = self.reflect_trait(queue, trait_, &name, docs)?;
+                let struct_name =
+                    format_ident!("{}", name.clone().replace("::", "_").replace("crate_", ""));
+                Ok(quote!(
+                    pub enum #struct_name {}
+                   impl Reflect for #struct_name {
+                        const TYPE_INFO: erised::TypeInfo = #type_info;
+                    }
+                ))
+            }
+            ItemEnum::StructField(_) => todo!(),
             ItemEnum::Variant(_) => todo!(),
             ItemEnum::Function(_) => todo!(),
-            ItemEnum::Trait(_) => todo!(),
             ItemEnum::TraitAlias(_) => todo!(),
             ItemEnum::Impl(_) => todo!(),
             ItemEnum::Typedef(_) => todo!(),
@@ -408,18 +557,6 @@ impl Mirror {
         }
     }
 
-    fn gen_item(&self, queue: &mut Vec<Item>, item: Item) -> anyhow::Result<TokenStream> {
-        let item_path = self.get_path(&item.id).context("Item path")?;
-
-        let type_info = self.reflect_item(queue, &item)?;
-
-        Ok(quote!(
-            impl Reflect for #item_path {
-                const TYPE_INFO: erised::TypeInfo = #type_info;
-            }
-        ))
-    }
-
     pub fn gen(&mut self) -> anyhow::Result<TokenStream> {
         let mut items = vec![];
 
@@ -432,7 +569,7 @@ impl Mirror {
             }
             processed.push(item.id.clone());
 
-            items.push(self.gen_item(&mut items_to_reflect, item)?);
+            items.push(self.reflect_item(&mut items_to_reflect, &item)?);
         }
 
         let prelude = Self::prelude();

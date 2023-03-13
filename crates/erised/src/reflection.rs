@@ -1,4 +1,5 @@
-pub trait ToReflect {}
+pub struct ToReflect;
+pub struct Trait<T>(T);
 
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub enum TypeInfo {
@@ -10,6 +11,8 @@ pub enum TypeInfo {
     Generic(GenericInfo),
     Borrow(BorrowInfo),
     Primitive(Primitive),
+    Trait(TraitInfo),
+    Self_,
 }
 
 // impl const From<&'static str> for TypeInfo {
@@ -93,6 +96,42 @@ pub enum VariantInfo {
         docs: Option<&'static str>,
         fields: &'static [StructFieldInfo],
     },
+}
+
+#[derive(PartialEq, Clone, Copy, Debug)]
+pub struct TraitInfo {
+    pub name: &'static str,
+    pub docs: Option<&'static str>,
+    pub consts: &'static [ConstInfo],
+    pub assoc_types: &'static [AssocTypeInfo],
+    pub methods: &'static [FunctionInfo],
+}
+
+#[derive(PartialEq, Clone, Copy, Debug)]
+pub struct ConstInfo {
+    pub name: &'static str,
+    pub docs: Option<&'static str>,
+    pub ty: TypeInfo,
+}
+
+#[derive(PartialEq, Clone, Copy, Debug)]
+pub struct FunctionInfo {
+    pub name: &'static str,
+    pub docs: Option<&'static str>,
+    pub inputs: &'static [FunctionArg],
+    pub output: Option<TypeInfo>,
+}
+
+#[derive(PartialEq, Clone, Copy, Debug)]
+pub struct FunctionArg {
+    pub name: &'static str,
+    pub ty: TypeInfo,
+}
+
+#[derive(PartialEq, Clone, Copy, Debug)]
+pub struct AssocTypeInfo {
+    pub name: &'static str,
+    pub docs: Option<&'static str>,
 }
 
 pub trait Reflect {

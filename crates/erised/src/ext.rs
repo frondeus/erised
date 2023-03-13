@@ -1,6 +1,6 @@
 use proc_macro2::TokenStream;
 use quote::ToTokens;
-use rustdoc_types::{GenericArgs, Impl, ItemEnum, Path, Struct, Type, Variant};
+use rustdoc_types::{Function, GenericArgs, Impl, ItemEnum, Path, Struct, Type, Variant};
 
 macro_rules! matches {
     ($s: expr, $pat: pat => $inner: expr) => {
@@ -29,6 +29,7 @@ pub trait ItemEnumExt {
     fn as_struct(&self) -> Option<&Struct>;
     fn as_struct_field(&self) -> Option<&Type>;
     fn as_variant(&self) -> Option<&Variant>;
+    fn as_fn(&self) -> Option<&Function>;
 }
 
 impl ItemEnumExt for ItemEnum {
@@ -46,6 +47,10 @@ impl ItemEnumExt for ItemEnum {
 
     fn as_variant(&self) -> Option<&Variant> {
         matches!(self, Self::Variant(i) => i)
+    }
+
+    fn as_fn(&self) -> Option<&Function> {
+        matches!(self, Self::Function(i) => i)
     }
 }
 
