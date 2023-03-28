@@ -25,7 +25,7 @@ pub struct Mirror {
 
 impl Mirror {
     pub fn build() -> anyhow::Result<Self> {
-        Command::new("cargo")
+        let mut out = Command::new("cargo")
             .arg("+nightly")
             .arg("rustdoc")
             .arg("--")
@@ -34,7 +34,9 @@ impl Mirror {
             .arg("json")
             .arg("--document-private-items")
             // .arg("--document-hidden-items")
-            .output()?;
+            .spawn()?;
+
+        out.wait()?;
 
         let file = std::fs::OpenOptions::new()
             .read(true)
@@ -164,8 +166,8 @@ impl Mirror {
                         GenericArgs::Parenthesized { .. } => todo!(),
                     };
                     Ok(quote!(
-                        erised::TypeInfo::Generic(
-                            erised::GenericInfo {
+                        erised::TypeInfo::WithGeneric(
+                            erised::WithGenericInfo {
                                 name: #field_ty,
                                 args: || &[#(#args),*]
                             }
@@ -183,8 +185,10 @@ impl Mirror {
                 }
             }
             Type::DynTrait(_) => todo!("Dyn trait"),
-            Type::Generic(gen) if gen == "Self" => Ok(quote!(erised::TypeInfo::Self_)),
-            Type::Generic(_gen) => todo!("Generic {ty:?}"),
+            Type::Generic(gen) if gen == "Self" => Ok(quote!(erised::TypeInfo::Receiver)),
+            Type::Generic(gen) => Ok(quote!(
+                erised::TypeInfo::Generic(erised::GenericInfo { name: #gen })
+            )),
             Type::Primitive(field_ty) => Ok(quote!(
                     erised::TypeInfo::Primitive(
                         erised::Primitive {

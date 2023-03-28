@@ -38,19 +38,94 @@ pub enum EnumWithDisc {
     WithDiscr = 2,
 }
 
+/// This is trait doc
 pub trait MyTrait {
+    /// This is type doc
     type Foo;
+    /// This is const doc
     const FOO: &'static str;
+    /// This is method doc
     fn my_trait_method(&self, arg: PlainStruct) -> EnumWithDisc;
     fn static_method(arg: PlainStruct);
+    fn my_generic_method<F: MyTrait>(&self, arg: F);
 }
 
 pub fn to_reflect(_: impl MyTrait, _: PlainStruct) -> erised::ToReflect {
     erised::ToReflect
 }
 
+mod reflected;
+
 #[test]
-fn test() {
+fn test_trait() {
+    use reflected::Reflect;
+    match crate::reflected::MyTrait::TYPE_INFO {
+        erised::TypeInfo::Trait(trait_) => {
+            dbg!(&trait_);
+            assert_eq!(trait_.name, "crate::MyTrait");
+            assert_eq!(trait_.docs, Some("This is trait doc"));
+            assert_eq!(trait_.assoc_types[0].name, "Foo");
+            assert_eq!(trait_.assoc_types[0].docs, Some("This is type doc"));
+            assert_eq!(trait_.consts[0].name, "FOO");
+            assert_eq!(trait_.consts[0].docs, Some("This is const doc"));
+            let const_ty = trait_.consts[0].ty.as_borrow().expect("Borrow");
+            assert_eq!(const_ty.lifetime, Some("static"));
+            assert_eq!(const_ty.mutable, false);
+            assert_eq!(
+                (const_ty.ty)(),
+                erised::TypeInfo::Primitive(erised::Primitive {
+                    name: "str",
+                    docs: None
+                })
+            );
+            assert_eq!(trait_.methods.len(), 3);
+            assert_eq!(trait_.methods[0].name, "my_trait_method");
+            assert_eq!(trait_.methods[0].docs, Some("This is method doc"));
+            assert_eq!(trait_.methods[0].inputs[0].name, "self");
+            let erised::BorrowInfo {
+                lifetime,
+                mutable,
+                ty,
+            } = trait_.methods[0].inputs[0].ty.as_borrow().expect("Borrow");
+            assert_eq!(lifetime, None);
+            assert_eq!(mutable, false);
+            assert_eq!((ty)(), erised::TypeInfo::Receiver);
+
+            assert_eq!(trait_.methods[0].inputs[1].name, "arg");
+            assert_eq!(trait_.methods[0].inputs[1].ty, PlainStruct::TYPE_INFO);
+
+            assert_eq!(trait_.methods[1].name, "static_method");
+            assert_eq!(trait_.methods[1].docs, None);
+            assert_eq!(trait_.methods[1].inputs[0].name, "arg");
+            assert_eq!(trait_.methods[1].inputs[0].ty, PlainStruct::TYPE_INFO);
+
+            assert_eq!(trait_.methods[2].name, "my_generic_method");
+            assert_eq!(trait_.methods[2].docs, None);
+            // assert_eq!(trait_.methods[2].generics[0].name, "F");
+            let erised::BorrowInfo {
+                lifetime,
+                mutable,
+                ty,
+            } = trait_.methods[2].inputs[0].ty.as_borrow().expect("Borrow");
+            assert_eq!(lifetime, None);
+            assert_eq!(mutable, false);
+            assert_eq!((ty)(), erised::TypeInfo::Receiver);
+            assert_eq!(trait_.methods[2].inputs[1].name, "arg");
+            assert_eq!(
+                trait_.methods[2].inputs[1]
+                    .ty
+                    .as_generic()
+                    .expect("Generic")
+                    .name,
+                "F"
+            );
+        }
+        _ => panic!("Expected trait_"),
+    }
+}
+
+#[test]
+fn test_type() {
     use crate::reflected::Reflect;
     match PlainStruct::TYPE_INFO {
         erised::TypeInfo::Struct(strukt) => {
@@ -102,12 +177,10 @@ fn test() {
                 }
             );
             assert_eq!(strukt.fields[3].name, "array");
-            let array_ty = match strukt.fields[3].ty {
-                erised::TypeInfo::Array(erised::ArrayInfo { len, ty }) => {
-                    assert_eq!(len, 4);
-                    (ty)()
-                }
-                _ => panic!("Expected array"),
+            let array_ty = {
+                let arr = strukt.fields[3].ty.as_array().expect("Array");
+                assert_eq!(arr.len, 4);
+                (arr.ty)()
             };
             assert_eq!(
                 array_ty,
@@ -128,13 +201,10 @@ fn test() {
                 }
             );
             assert_eq!(strukt.fields[5].name, "recurse");
-            let generic_args = match strukt.fields[5].ty {
-                erised::TypeInfo::Generic(erised::GenericInfo { name, args }) => {
-                    assert_eq!(name, "alloc::boxed::Box");
-                    (args)()
-                }
-                t => panic!("Expected generic, found {t:?}"),
-            };
+            let erised::WithGenericInfo { name, args } =
+                strukt.fields[5].ty.as_withgeneric().expect("With generic");
+            assert_eq!(name, "alloc::boxed::Box");
+            let generic_args = (args)();
             assert_eq!(generic_args.len(), 1);
             assert_eq!(generic_args[0], PlainStruct::TYPE_INFO);
 
@@ -260,5 +330,3 @@ fn test() {
         _ => panic!("Expected struct"),
     }
 }
-
-mod reflected;

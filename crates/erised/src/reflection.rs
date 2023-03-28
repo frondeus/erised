@@ -8,12 +8,42 @@ pub enum TypeInfo {
     TupleStruct(TupleStructInfo),
     Enum(EnumInfo),
     Array(ArrayInfo),
-    Generic(GenericInfo),
+    WithGeneric(WithGenericInfo),
     Borrow(BorrowInfo),
     Primitive(Primitive),
     Trait(TraitInfo),
-    Self_,
+    Generic(GenericInfo),
+    Receiver,
 }
+
+macro_rules! as_ty {
+    ($({$name: ident, $var: ident, $ty: ty}),*) => {
+        impl TypeInfo {
+            $(
+
+            pub fn $name(self) -> Option<$ty> {
+                match self {
+                    Self::$var(v) => Some(v),
+                    _ => None,
+                }
+            }
+            )*
+        }
+    };
+}
+
+as_ty!(
+    {as_struct, Struct, StructInfo},
+    {as_tuple, Tuple, TupleInfo},
+    {as_tuplestruct, TupleStruct, TupleStructInfo},
+    {as_enum, Enum, EnumInfo},
+    {as_array, Array, ArrayInfo},
+    {as_withgeneric, WithGeneric, WithGenericInfo},
+    {as_borrow, Borrow, BorrowInfo},
+    {as_primitive, Primitive, Primitive},
+    {as_trait, Trait, TraitInfo},
+    {as_generic, Generic, GenericInfo}
+);
 
 // impl const From<&'static str> for TypeInfo {
 //     fn from(name: &'static str) -> Self {
@@ -54,6 +84,11 @@ pub struct ArrayInfo {
 
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub struct GenericInfo {
+    pub name: &'static str,
+}
+
+#[derive(PartialEq, Clone, Copy, Debug)]
+pub struct WithGenericInfo {
     pub name: &'static str,
     pub args: fn() -> &'static [TypeInfo],
 }
