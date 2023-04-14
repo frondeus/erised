@@ -38,6 +38,8 @@ pub enum EnumWithDisc {
     WithDiscr = 2,
 }
 
+pub trait BorrowedTrait<'a> {}
+
 /// This is trait doc
 pub trait MyTrait {
     /// This is type doc
@@ -47,7 +49,9 @@ pub trait MyTrait {
     /// This is method doc
     fn my_trait_method(&self, arg: PlainStruct) -> EnumWithDisc;
     fn static_method(arg: PlainStruct);
-    fn my_generic_method<F: MyTrait>(&self, arg: F);
+    fn my_generic_method<F: MyTrait>(&self, arg: F)
+    where
+        F: for<'a> BorrowedTrait<'a>;
 }
 
 pub fn to_reflect(_: impl MyTrait, _: PlainStruct) -> erised::ToReflect {
@@ -101,7 +105,15 @@ fn test_trait() {
 
             assert_eq!(trait_.methods[2].name, "my_generic_method");
             assert_eq!(trait_.methods[2].docs, None);
-            // assert_eq!(trait_.methods[2].generics[0].name, "F");
+            assert_eq!(trait_.methods[2].generics[0].name, "F");
+            let generic_kind = trait_.methods[2].generics[0]
+                .kind
+                .as_type()
+                .expect("Type generic");
+            assert_eq!(
+                generic_kind.bounds[0].trait_,
+                crate::reflected::BorrowedTrait::TYPE_INFO
+            );
             let erised::BorrowInfo {
                 lifetime,
                 mutable,

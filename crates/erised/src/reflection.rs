@@ -155,6 +155,36 @@ pub struct FunctionInfo {
     pub docs: Option<&'static str>,
     pub inputs: &'static [FunctionArg],
     pub output: Option<TypeInfo>,
+    pub generics: &'static [FunctionGeneric],
+}
+
+#[derive(PartialEq, Clone, Copy, Debug)]
+pub struct FunctionGeneric {
+    pub name: &'static str,
+    pub kind: GenericParamKind,
+}
+
+#[derive(PartialEq, Clone, Copy, Debug)]
+pub enum GenericParamKind {
+    Type(GenericParamType),
+}
+
+impl GenericParamKind {
+    pub fn as_type(self) -> Option<GenericParamType> {
+        match self {
+            GenericParamKind::Type(t) => Some(t),
+        }
+    }
+}
+
+#[derive(PartialEq, Clone, Copy, Debug)]
+pub struct GenericParamType {
+    pub bounds: &'static [GenericBound],
+}
+
+#[derive(PartialEq, Clone, Copy, Debug)]
+pub struct GenericBound {
+    pub trait_: TypeInfo,
 }
 
 #[derive(PartialEq, Clone, Copy, Debug)]
