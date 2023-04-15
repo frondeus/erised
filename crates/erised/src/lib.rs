@@ -24,10 +24,16 @@ pub struct Mirror {
 }
 
 impl Mirror {
-    pub fn build() -> anyhow::Result<Self> {
-        let mut out = Command::new("cargo")
-            .arg("+nightly")
-            .arg("rustdoc")
+    pub fn build(name: &str, extra_doc_args: &[&'static str]) -> anyhow::Result<Self> {
+        let mut command_builder = Command::new("cargo");
+
+        command_builder.arg("+nightly").arg("rustdoc");
+
+        for extra_arg in extra_doc_args {
+            command_builder.arg(extra_arg);
+        }
+
+        let mut out = command_builder
             .arg("--")
             .arg("-Zunstable-options")
             .arg("--output-format")
@@ -40,7 +46,8 @@ impl Mirror {
 
         let file = std::fs::OpenOptions::new()
             .read(true)
-            .open("./target/doc/doc_reflect.json")?;
+            .open(format!("./target/doc/{name}.json"))
+            .context("Could not open target JSON documentation")?;
 
         let krate: Crate = serde_json::from_reader(file)?;
 
@@ -49,7 +56,7 @@ impl Mirror {
             .iter()
             .find(|(_path, val)| val.path == &["erised", "reflection", "ToReflect"])
             .map(|(p, _)| p)
-            .context("Reflect")?
+            .context("Failed to find reflection id")?
             .clone();
 
         let root_crate = krate.index.get(&krate.root).context("Root crate")?;
@@ -216,7 +223,21 @@ impl Mirror {
     pub fn reflect_type(&self, queue: &mut Vec<Item>, ty: &Type) -> anyhow::Result<TokenStream> {
         match ty {
             Type::ResolvedPath(path) => self.reflect_path(queue, path),
-            Type::DynTrait(_) => todo!("Dyn trait"),
+            Type::DynTrait(d) => {
+                let mut traits: Vec<TokenStream> = vec![];
+                let lifetime = d.lifetime.quote();
+                for trait_ in &d.traits {
+                    let it = self.reflect_path(queue, &trait_.trait_)?;
+                    traits.push(it);
+                }
+
+                Ok(quote!(erised::TypeInfo::DynTrait(
+                  erised::DynTraitInfo {
+                      traits: &[#(#traits),*],
+                      lifetime: #lifetime
+                  }
+                )))
+            }
             Type::Generic(gen) if gen == "Self" => Ok(quote!(erised::TypeInfo::Receiver)),
             Type::Generic(gen) => Ok(quote!(
                 erised::TypeInfo::Generic(erised::GenericInfo { name: #gen })
@@ -473,14 +494,24 @@ impl Mirror {
 
         for param in &func.generics.params {
             let generic_name = &param.name;
-            let mut bounds: Vec<TokenStream> = vec![];
+            let mut kind: TokenStream = quote!();
 
             match &param.kind {
-                rustdoc_types::GenericParamDefKind::Lifetime { .. } => todo!(),
+                rustdoc_types::GenericParamDefKind::Lifetime { outlives } => {
+                    // todo!("Generic Param Def Kind::Lifetime: {param:#?}")
+                    kind = quote!(
+                        erised::GenericParamKind::Lifetime(
+                            erised::LifetimeParamType {
+                                outlives: &[ #(#outlives),* ]
+                            }
+                        )
+                    );
+                }
                 rustdoc_types::GenericParamDefKind::Type {
                     bounds: param_bounds,
                     ..
                 } => {
+                    let mut bounds: Vec<TokenStream> = vec![];
                     for bound in param_bounds.iter() {
                         match bound {
                             rustdoc_types::GenericBound::TraitBound {
@@ -498,6 +529,13 @@ impl Mirror {
                             rustdoc_types::GenericBound::Outlives(_) => todo!(),
                         }
                     }
+                    kind = quote!(
+                        erised::GenericParamKind::Type(
+                            erised::GenericParamType {
+                                bounds: &[#(#bounds),*]
+                            }
+                        )
+                    );
                 }
                 rustdoc_types::GenericParamDefKind::Const { .. } => todo!(),
             }
@@ -505,11 +543,7 @@ impl Mirror {
             generics.push(quote!(
                erised::FunctionGeneric {
                     name: #generic_name,
-                    kind: erised::GenericParamKind::Type(
-                        erised::GenericParamType {
-                            bounds: &[#(#bounds),*]
-                        }
-                    )
+                    kind: #kind
                 }
             ));
         }

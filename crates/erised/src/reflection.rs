@@ -12,6 +12,7 @@ pub enum TypeInfo {
     Borrow(BorrowInfo),
     Primitive(Primitive),
     Trait(TraitInfo),
+    DynTrait(DynTraitInfo),
     Generic(GenericInfo),
     Receiver,
 }
@@ -134,6 +135,12 @@ pub enum VariantInfo {
 }
 
 #[derive(PartialEq, Clone, Copy, Debug)]
+pub struct DynTraitInfo {
+    pub traits: &'static [TraitInfo],
+    pub lifetime: Option<&'static str>,
+}
+
+#[derive(PartialEq, Clone, Copy, Debug)]
 pub struct TraitInfo {
     pub name: &'static str,
     pub docs: Option<&'static str>,
@@ -167,12 +174,21 @@ pub struct FunctionGeneric {
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub enum GenericParamKind {
     Type(GenericParamType),
+    Lifetime(LifetimeParamType),
 }
 
 impl GenericParamKind {
     pub fn as_type(self) -> Option<GenericParamType> {
         match self {
             GenericParamKind::Type(t) => Some(t),
+            _ => None,
+        }
+    }
+
+    pub fn as_lifetime(self) -> Option<LifetimeParamType> {
+        match self {
+            GenericParamKind::Lifetime(l) => Some(l),
+            _ => None,
         }
     }
 }
@@ -180,6 +196,11 @@ impl GenericParamKind {
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub struct GenericParamType {
     pub bounds: &'static [GenericBound],
+}
+
+#[derive(PartialEq, Clone, Copy, Debug)]
+pub struct LifetimeParamType {
+    pub outlives: &'static [&'static str],
 }
 
 #[derive(PartialEq, Clone, Copy, Debug)]
