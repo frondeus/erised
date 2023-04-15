@@ -49,7 +49,9 @@ pub trait MyTrait {
     /// This is method doc
     fn my_trait_method(&self, arg: PlainStruct) -> EnumWithDisc;
     fn static_method(arg: PlainStruct);
-    fn my_generic_method<F: MyTrait>(&self, arg: F)
+    fn my_generic_method<F: MyTrait>(&self, arg: F);
+
+    fn my_generic_method_with_where<F: MyTrait>(&self, arg: F)
     where
         F: for<'a> BorrowedTrait<'a>;
 }
@@ -65,7 +67,6 @@ fn test_trait() {
     use reflected::Reflect;
     match crate::reflected::MyTrait::TYPE_INFO {
         erised::TypeInfo::Trait(trait_) => {
-            dbg!(&trait_);
             assert_eq!(trait_.name, "crate::MyTrait");
             assert_eq!(trait_.docs, Some("This is trait doc"));
             assert_eq!(trait_.assoc_types[0].name, "Foo");
@@ -82,7 +83,7 @@ fn test_trait() {
                     docs: None
                 })
             );
-            assert_eq!(trait_.methods.len(), 3);
+            assert_eq!(trait_.methods.len(), 4);
             assert_eq!(trait_.methods[0].name, "my_trait_method");
             assert_eq!(trait_.methods[0].docs, Some("This is method doc"));
             assert_eq!(trait_.methods[0].inputs[0].name, "self");
@@ -111,8 +112,10 @@ fn test_trait() {
                 .as_type()
                 .expect("Type generic");
             assert_eq!(
-                generic_kind.bounds[0].trait_,
-                crate::reflected::BorrowedTrait::TYPE_INFO
+                (generic_kind.bounds[0].trait_)(),
+                crate::reflected::MyTrait::TYPE_INFO
+                    .as_trait()
+                    .expect("Trait")
             );
             let erised::BorrowInfo {
                 lifetime,

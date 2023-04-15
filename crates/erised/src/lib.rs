@@ -5,8 +5,8 @@ use ext::{ItemEnumExt, OptionBoxGenericArgsExt};
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 use rustdoc_types::{
-    Crate, Enum, Function, GenericArg, GenericArgs, GenericBound, Id, Item, ItemEnum, Struct,
-    StructKind, Type, VariantKind,
+    Crate, Enum, Function, GenericArg, GenericArgs, Id, Item, ItemEnum, Path, Struct, StructKind,
+    Type, VariantKind,
 };
 
 use crate::ext::{OptionExt, TypeExt};
@@ -81,7 +81,7 @@ impl Mirror {
                     Type::ImplTrait(bounds) => bounds
                         .iter()
                         .filter_map(|bound| match bound {
-                            GenericBound::TraitBound {
+                            rustdoc_types::GenericBound::TraitBound {
                                 trait_,
                                 generic_params: _,
                                 modifier: _,
@@ -122,6 +122,25 @@ impl Mirror {
         let item_path = quote!(#(#item_path)::*);
         Ok(item_path)
     }
+
+    pub fn get_local_path(&self, id: &Id) -> anyhow::Result<TokenStream> {
+        let item_path = self.krate.paths.get(id).context("Item path")?;
+        let item_crate = &item_path.crate_id;
+        let mut item_path: Vec<_> = item_path
+            .path
+            .iter()
+            .map(|t| format_ident!("{t}"))
+            .collect();
+        if item_crate == &self.root_crate_id {
+            if let Some(_krate) = item_path.first_mut() {
+                // *krate = format_ident!("crate");
+                item_path.remove(0);
+            }
+        }
+        let item_path = quote!(#(#item_path)::*);
+        Ok(item_path)
+    }
+
     pub fn get_full_name(&self, id: &Id, name: &Option<String>) -> anyhow::Result<String> {
         let item_path = match self.krate.paths.get(id) {
             None => return Ok(name.as_deref().unwrap_or_default().to_string()),
@@ -138,52 +157,65 @@ impl Mirror {
         Ok(item_path.join("::"))
     }
 
+    fn reflect_path(&self, queue: &mut Vec<Item>, path: &Path) -> anyhow::Result<TokenStream> {
+        // let field_ty = &path.name;
+        let field_ty = self
+            .get_full_name(&path.id, &Some(path.name.clone()))
+            .context("Item name")?;
+
+        if let Some(item) = self.krate.index.get(&path.id) {
+            let is_trait = match item.inner {
+                ItemEnum::Trait(_) => true,
+                _ => false,
+            };
+            let item_path = self.get_path(&path.id).context("Item path")?;
+            queue.push(item.clone());
+            if is_trait {
+                let local_path = self.get_local_path(&path.id).context("Item local path")?;
+                Ok(quote!(
+                    <#local_path as Reflect>::TYPE_INFO
+                ))
+            } else {
+                Ok(quote!(
+                    <#item_path as Reflect>::TYPE_INFO
+                ))
+            }
+        } else if let Some(args) = path.args.as_non_empty() {
+            let args = match &**args {
+                GenericArgs::AngleBracketed { args, bindings: _ } => args
+                    .iter()
+                    .map(|arg| match arg {
+                        GenericArg::Lifetime(_) => todo!(),
+                        GenericArg::Type(ty) => self.reflect_type(queue, ty),
+                        GenericArg::Const(_) => todo!(),
+                        GenericArg::Infer => todo!(),
+                    })
+                    .collect::<Result<Vec<_>, _>>()?,
+                GenericArgs::Parenthesized { .. } => todo!(),
+            };
+            Ok(quote!(
+                erised::TypeInfo::WithGeneric(
+                    erised::WithGenericInfo {
+                        name: #field_ty,
+                        args: || &[#(#args),*]
+                    }
+                )
+            ))
+        } else {
+            Ok(quote!(
+                erised::TypeInfo::Primitive(
+                    erised::Primitive {
+                        name: #field_ty,
+                        docs: None
+                    }
+                )
+            ))
+        }
+    }
+
     pub fn reflect_type(&self, queue: &mut Vec<Item>, ty: &Type) -> anyhow::Result<TokenStream> {
         match ty {
-            Type::ResolvedPath(path) => {
-                // let field_ty = &path.name;
-                let field_ty = self
-                    .get_full_name(&path.id, &Some(path.name.clone()))
-                    .context("Item name")?;
-
-                if let Some(item) = self.krate.index.get(&path.id) {
-                    let item_path = self.get_path(&path.id).context("Item path")?;
-                    queue.push(item.clone());
-                    Ok(quote!(
-                        <#item_path as Reflect>::TYPE_INFO
-                    ))
-                } else if let Some(args) = path.args.as_non_empty() {
-                    let args = match &**args {
-                        GenericArgs::AngleBracketed { args, bindings: _ } => args
-                            .iter()
-                            .map(|arg| match arg {
-                                GenericArg::Lifetime(_) => todo!(),
-                                GenericArg::Type(ty) => self.reflect_type(queue, ty),
-                                GenericArg::Const(_) => todo!(),
-                                GenericArg::Infer => todo!(),
-                            })
-                            .collect::<Result<Vec<_>, _>>()?,
-                        GenericArgs::Parenthesized { .. } => todo!(),
-                    };
-                    Ok(quote!(
-                        erised::TypeInfo::WithGeneric(
-                            erised::WithGenericInfo {
-                                name: #field_ty,
-                                args: || &[#(#args),*]
-                            }
-                        )
-                    ))
-                } else {
-                    Ok(quote!(
-                        erised::TypeInfo::Primitive(
-                            erised::Primitive {
-                                name: #field_ty,
-                                docs: None
-                            }
-                        )
-                    ))
-                }
-            }
+            Type::ResolvedPath(path) => self.reflect_path(queue, path),
             Type::DynTrait(_) => todo!("Dyn trait"),
             Type::Generic(gen) if gen == "Self" => Ok(quote!(erised::TypeInfo::Receiver)),
             Type::Generic(gen) => Ok(quote!(
@@ -421,6 +453,7 @@ impl Mirror {
         docs: TokenStream,
     ) -> anyhow::Result<TokenStream> {
         let mut inputs: Vec<TokenStream> = vec![];
+        let mut generics: Vec<TokenStream> = vec![];
         for (input_name, input) in &func.decl.inputs {
             let ty = self.reflect_type(queue, input)?;
             inputs.push(quote!(
@@ -437,12 +470,57 @@ impl Mirror {
             .map(|out| self.reflect_type(queue, &out))
             .transpose()?
             .quote();
+
+        for param in &func.generics.params {
+            let generic_name = &param.name;
+            let mut bounds: Vec<TokenStream> = vec![];
+
+            match &param.kind {
+                rustdoc_types::GenericParamDefKind::Lifetime { .. } => todo!(),
+                rustdoc_types::GenericParamDefKind::Type {
+                    bounds: param_bounds,
+                    ..
+                } => {
+                    for bound in param_bounds.iter() {
+                        match bound {
+                            rustdoc_types::GenericBound::TraitBound {
+                                trait_,
+                                generic_params: _,
+                                modifier: _,
+                            } => {
+                                let trait_info = self.reflect_path(queue, &trait_)?;
+                                bounds.push(quote!(
+                                    erised::GenericBound {
+                                        trait_: || #trait_info.as_trait().unwrap()
+                                    }
+                                ));
+                            }
+                            rustdoc_types::GenericBound::Outlives(_) => todo!(),
+                        }
+                    }
+                }
+                rustdoc_types::GenericParamDefKind::Const { .. } => todo!(),
+            }
+
+            generics.push(quote!(
+               erised::FunctionGeneric {
+                    name: #generic_name,
+                    kind: erised::GenericParamKind::Type(
+                        erised::GenericParamType {
+                            bounds: &[#(#bounds),*]
+                        }
+                    )
+                }
+            ));
+        }
+
         Ok(quote!(
             erised::FunctionInfo {
                 name: #name,
                 docs: #docs,
                 inputs: &[#(#inputs),*],
-                output: #output
+                output: #output,
+                generics: &[#(#generics),*]
             }
         ))
     }

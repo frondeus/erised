@@ -184,7 +184,7 @@ pub struct GenericParamType {
 
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub struct GenericBound {
-    pub trait_: TypeInfo,
+    pub trait_: fn() -> TraitInfo,
 }
 
 #[derive(PartialEq, Clone, Copy, Debug)]
