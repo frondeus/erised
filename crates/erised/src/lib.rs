@@ -1,4 +1,4 @@
-use std::process::Command;
+use std::{path::PathBuf, process::Command};
 
 use anyhow::Context;
 use ext::{ItemEnumExt, OptionBoxGenericArgsExt};
@@ -21,6 +21,11 @@ pub struct Mirror {
     krate: Crate,
     reflect_id: Id,
     root_crate_id: u32,
+}
+
+pub struct Reflection {
+    path: PathBuf,
+    reflection: TokenStream,
 }
 
 impl Mirror {
@@ -69,7 +74,7 @@ impl Mirror {
         })
     }
 
-    fn items_to_reflect(krate: &Crate, reflect_id: &Id) -> Vec<Item> {
+    fn items_to_reflect(krate: &Crate, reflect_id: &Id) -> Vec<(PathBuf, Vec<Item>)> {
         krate
             .index
             .iter()
@@ -77,40 +82,64 @@ impl Mirror {
                 let fn_ = item.inner.as_fn()?;
                 if let Some(out) = fn_.decl.output.as_ref() {
                     let out = out.as_resolved_path()?;
-                    if &out.id == reflect_id {
-                        return Some(fn_);
+                    if &out.id == reflect_id && item.span.is_some() {
+                        return Some((fn_, item.span.clone().unwrap()));
                     }
                 }
                 None
             })
-            .flat_map(|fn_| {
-                fn_.decl.inputs.iter().flat_map(|(_, input)| match input {
-                    Type::ImplTrait(bounds) => bounds
-                        .iter()
-                        .filter_map(|bound| match bound {
-                            rustdoc_types::GenericBound::TraitBound {
-                                trait_,
-                                generic_params: _,
-                                modifier: _,
-                            } => Some(trait_.id.clone()),
-                            _ => None,
-                        })
-                        .collect(),
-                    Type::ResolvedPath(path) => vec![path.id.clone()],
-                    _ => vec![],
-                })
+            .map(|(fn_, span)| {
+                let items = fn_
+                    .decl
+                    .inputs
+                    .iter()
+                    .flat_map(|(_, input)| match input {
+                        Type::ImplTrait(bounds) => bounds
+                            .iter()
+                            .filter_map(|bound| match bound {
+                                rustdoc_types::GenericBound::TraitBound {
+                                    trait_,
+                                    generic_params: _,
+                                    modifier: _,
+                                } => Some(trait_.id.clone()),
+                                _ => None,
+                            })
+                            .collect(),
+                        Type::ResolvedPath(path) => vec![path.id.clone()],
+                        _ => vec![],
+                    })
+                    .filter_map(|id| krate.index.get(&id))
+                    .cloned()
+                    .collect();
+
+                (span.filename, items)
             })
-            .filter_map(|id| krate.index.get(&id))
-            .cloned()
             .collect()
     }
 
-    pub fn prelude() -> TokenStream {
-        quote!(
+    pub fn prelude(&self, items: &[Item]) -> anyhow::Result<TokenStream> {
+        let mut reflection_input: Vec<TokenStream> = vec![];
+        for item in items {
+            let is_trait = match item.inner {
+                rustdoc_types::ItemEnum::Trait(_) => true,
+                _ => false,
+            };
+            let name = self.get_path(&item.id).context("Item path")?;
+            if is_trait {
+                reflection_input.push(quote!(_: impl #name));
+            } else {
+                reflection_input.push(quote!(_: #name));
+            }
+        }
+        Ok(quote!(
+            pub fn to_reflect(#(#reflection_input),*) -> erised::ToReflect {
+                erised::ToReflect
+            }
+
             pub trait Reflect {
                 const TYPE_INFO: erised::TypeInfo;
             }
-        )
+        ))
     }
 
     pub fn get_path(&self, id: &Id) -> anyhow::Result<TokenStream> {
@@ -242,7 +271,6 @@ impl Mirror {
                 }
                 GenericArgs::Parenthesized { .. } => todo!(),
             };
-            dbg!(&path);
             Ok(quote!(
                 erised::TypeInfo::WithGeneric(
                     erised::WithGenericInfo {
@@ -726,27 +754,34 @@ impl Mirror {
         }
     }
 
-    pub fn gen(&mut self) -> anyhow::Result<TokenStream> {
-        let mut items = vec![];
+    pub fn gen(&mut self) -> anyhow::Result<Vec<Reflection>> {
+        let items_to_reflect = Self::items_to_reflect(&self.krate, &self.reflect_id);
+        let mut reflections = vec![];
 
-        let mut processed = vec![];
-        let mut items_to_reflect = Self::items_to_reflect(&self.krate, &self.reflect_id);
+        for (reflection_path, mut reflection_items) in items_to_reflect {
+            let mut items = vec![];
+            let mut processed = vec![];
+            let prelude = self.prelude(&reflection_items)?;
 
-        while let Some(item) = items_to_reflect.pop() {
-            if processed.contains(&item.id) {
-                continue;
+            while let Some(item) = reflection_items.pop() {
+                if processed.contains(&item.id) {
+                    continue;
+                }
+                processed.push(item.id.clone());
+
+                items.push(self.reflect_item(&mut reflection_items, &item)?);
             }
-            processed.push(item.id.clone());
 
-            items.push(self.reflect_item(&mut items_to_reflect, &item)?);
+            reflections.push(Reflection {
+                path: reflection_path,
+                reflection: quote! {
+                    #prelude
+                    #(#items)*
+                },
+            });
         }
 
-        let prelude = Self::prelude();
-
-        Ok(quote! {
-            #prelude
-            #(#items)*
-        })
+        Ok(reflections)
     }
 }
 
