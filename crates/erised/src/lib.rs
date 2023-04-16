@@ -188,23 +188,67 @@ impl Mirror {
                 ))
             }
         } else if let Some(args) = path.args.as_non_empty() {
-            let args = match &**args {
-                GenericArgs::AngleBracketed { args, bindings: _ } => args
-                    .iter()
-                    .map(|arg| match arg {
-                        GenericArg::Lifetime(_) => todo!(),
-                        GenericArg::Type(ty) => self.reflect_type(queue, ty),
-                        GenericArg::Const(_) => todo!(),
-                        GenericArg::Infer => todo!(),
-                    })
-                    .collect::<Result<Vec<_>, _>>()?,
+            let (args, bindings) = match &**args {
+                GenericArgs::AngleBracketed { args, bindings } => {
+                    let a = args
+                        .iter()
+                        .map(|arg| match arg {
+                            GenericArg::Lifetime(_) => todo!(),
+                            GenericArg::Type(ty) => self.reflect_type(queue, ty),
+                            GenericArg::Const(_) => todo!(),
+                            GenericArg::Infer => todo!(),
+                        })
+                        .collect::<Result<Vec<_>, _>>()?;
+
+                    let b: Vec<_> = bindings
+                        .iter()
+                        .map(|binding| {
+                            let name = &binding.name;
+                            let binding = match &binding.binding {
+                                rustdoc_types::TypeBindingKind::Equality(
+                                    rustdoc_types::Term::Type(_type),
+                                ) => {
+                                    let ty = self.reflect_type(queue, _type)?;
+                                    quote!(
+                                        erised::TypeBindingKind::Equality {
+                                            term: erised::Term::Type(#ty)
+                                        }
+                                    )
+                                }
+                                rustdoc_types::TypeBindingKind::Equality(
+                                    rustdoc_types::Term::Constant(_),
+                                ) => {
+                                    todo!()
+                                }
+                                rustdoc_types::TypeBindingKind::Constraint(bounds) => {
+                                    let bounds = self.reflect_generic_bounds(queue, bounds)?;
+                                    quote!(
+                                        erised::TypeBindingKind::Constraint {
+                                            bounds: &[#(#bounds),*]
+                                        }
+                                    )
+                                }
+                            };
+                            Ok(quote!(
+                                erised::WithGenericBindingInfo {
+                                    name: #name,
+                                    binding: #binding
+                                }
+                            ))
+                        })
+                        .collect::<anyhow::Result<_>>()?;
+
+                    (a, b)
+                }
                 GenericArgs::Parenthesized { .. } => todo!(),
             };
+            dbg!(&path);
             Ok(quote!(
                 erised::TypeInfo::WithGeneric(
                     erised::WithGenericInfo {
                         name: #field_ty,
-                        args: || &[#(#args),*]
+                        args: || &[#(#args),*],
+                        bindings: &[#(#bindings),*]
                     }
                 )
             ))
@@ -466,6 +510,32 @@ impl Mirror {
         ))
     }
 
+    fn reflect_generic_bounds(
+        &self,
+        queue: &mut Vec<Item>,
+        param_bounds: &Vec<rustdoc_types::GenericBound>,
+    ) -> anyhow::Result<Vec<TokenStream>> {
+        let mut bounds: Vec<TokenStream> = vec![];
+        for bound in param_bounds.iter() {
+            match bound {
+                rustdoc_types::GenericBound::TraitBound {
+                    trait_,
+                    generic_params: _,
+                    modifier: _,
+                } => {
+                    let trait_info = self.reflect_path(queue, &trait_)?;
+                    bounds.push(quote!(
+                        erised::GenericBound {
+                            trait_: || #trait_info.as_trait().unwrap()
+                        }
+                    ));
+                }
+                rustdoc_types::GenericBound::Outlives(_) => todo!(),
+            }
+        }
+        Ok(bounds)
+    }
+
     fn reflect_function(
         &self,
         queue: &mut Vec<Item>,
@@ -511,24 +581,7 @@ impl Mirror {
                     bounds: param_bounds,
                     ..
                 } => {
-                    let mut bounds: Vec<TokenStream> = vec![];
-                    for bound in param_bounds.iter() {
-                        match bound {
-                            rustdoc_types::GenericBound::TraitBound {
-                                trait_,
-                                generic_params: _,
-                                modifier: _,
-                            } => {
-                                let trait_info = self.reflect_path(queue, &trait_)?;
-                                bounds.push(quote!(
-                                    erised::GenericBound {
-                                        trait_: || #trait_info.as_trait().unwrap()
-                                    }
-                                ));
-                            }
-                            rustdoc_types::GenericBound::Outlives(_) => todo!(),
-                        }
-                    }
+                    let bounds = self.reflect_generic_bounds(queue, param_bounds)?;
                     kind = quote!(
                         erised::GenericParamKind::Type(
                             erised::GenericParamType {

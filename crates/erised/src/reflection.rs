@@ -92,6 +92,25 @@ pub struct GenericInfo {
 pub struct WithGenericInfo {
     pub name: &'static str,
     pub args: fn() -> &'static [TypeInfo],
+    pub bindings: &'static [WithGenericBindingInfo],
+}
+
+#[derive(PartialEq, Clone, Copy, Debug)]
+pub struct WithGenericBindingInfo {
+    pub name: &'static str,
+    pub binding: TypeBindingKind,
+}
+
+#[derive(PartialEq, Clone, Copy, Debug)]
+pub enum TypeBindingKind {
+    Equality { term: Term },
+    Constraint { bounds: &'static [GenericBound] },
+}
+
+#[derive(PartialEq, Clone, Copy, Debug)]
+pub enum Term {
+    Type(TypeInfo),
+    //Constant
 }
 
 #[derive(PartialEq, Clone, Copy, Debug)]
@@ -136,7 +155,7 @@ pub enum VariantInfo {
 
 #[derive(PartialEq, Clone, Copy, Debug)]
 pub struct DynTraitInfo {
-    pub traits: &'static [TraitInfo],
+    pub traits: &'static [TypeInfo],
     pub lifetime: Option<&'static str>,
 }
 
