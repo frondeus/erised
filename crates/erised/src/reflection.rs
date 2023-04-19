@@ -1,7 +1,7 @@
 pub struct ToReflect;
 pub struct Trait<T>(T);
 
-#[derive(PartialEq, Clone, Copy, Debug)]
+#[derive(PartialEq, Hash, Clone, Copy, Debug, Eq)]
 pub enum TypeInfo {
     Struct(StructInfo),
     Tuple(TupleInfo),
@@ -52,89 +52,89 @@ as_ty!(
 //     }
 // }
 
-#[derive(PartialEq, Clone, Copy, Debug)]
+#[derive(PartialEq, Hash, Eq, Clone, Copy, Debug)]
 pub struct Primitive {
     pub name: &'static str,
     pub docs: Option<&'static str>,
 }
 
-#[derive(PartialEq, Clone, Copy, Debug)]
+#[derive(PartialEq, Hash, Eq, Clone, Copy, Debug)]
 pub struct StructInfo {
     pub docs: Option<&'static str>,
     pub name: &'static str,
     pub fields: &'static [StructFieldInfo],
 }
 
-#[derive(PartialEq, Clone, Copy, Debug)]
+#[derive(PartialEq, Hash, Eq, Clone, Copy, Debug)]
 pub struct TupleStructInfo {
     pub docs: Option<&'static str>,
     pub name: &'static str,
     pub fields: &'static [TypeInfo],
 }
 
-#[derive(PartialEq, Clone, Copy, Debug)]
+#[derive(PartialEq, Hash, Eq, Clone, Copy, Debug)]
 pub struct TupleInfo {
     pub fields: &'static [TypeInfo],
 }
 
-#[derive(PartialEq, Clone, Copy, Debug)]
+#[derive(PartialEq, Hash, Eq, Clone, Copy, Debug)]
 pub struct ArrayInfo {
     pub ty: fn() -> TypeInfo,
     pub len: usize,
 }
 
-#[derive(PartialEq, Clone, Copy, Debug)]
+#[derive(PartialEq, Hash, Eq, Clone, Copy, Debug)]
 pub struct GenericInfo {
     pub name: &'static str,
 }
 
-#[derive(PartialEq, Clone, Copy, Debug)]
+#[derive(PartialEq, Hash, Eq, Clone, Copy, Debug)]
 pub struct WithGenericInfo {
     pub name: &'static str,
     pub args: fn() -> &'static [TypeInfo],
     pub bindings: &'static [WithGenericBindingInfo],
 }
 
-#[derive(PartialEq, Clone, Copy, Debug)]
+#[derive(PartialEq, Hash, Eq, Clone, Copy, Debug)]
 pub struct WithGenericBindingInfo {
     pub name: &'static str,
     pub binding: TypeBindingKind,
 }
 
-#[derive(PartialEq, Clone, Copy, Debug)]
+#[derive(PartialEq, Hash, Eq, Clone, Copy, Debug)]
 pub enum TypeBindingKind {
     Equality { term: Term },
     Constraint { bounds: &'static [GenericBound] },
 }
 
-#[derive(PartialEq, Clone, Copy, Debug)]
+#[derive(PartialEq, Hash, Eq, Clone, Copy, Debug)]
 pub enum Term {
     Type(TypeInfo),
     //Constant
 }
 
-#[derive(PartialEq, Clone, Copy, Debug)]
+#[derive(PartialEq, Hash, Eq, Clone, Copy, Debug)]
 pub struct BorrowInfo {
     pub lifetime: Option<&'static str>,
     pub mutable: bool,
     pub ty: fn() -> TypeInfo,
 }
 
-#[derive(PartialEq, Clone, Copy, Debug)]
+#[derive(PartialEq, Hash, Eq, Clone, Copy, Debug)]
 pub struct StructFieldInfo {
     pub name: &'static str,
     pub docs: Option<&'static str>,
     pub ty: TypeInfo,
 }
 
-#[derive(PartialEq, Clone, Copy, Debug)]
+#[derive(PartialEq, Hash, Eq, Clone, Copy, Debug)]
 pub struct EnumInfo {
     pub docs: Option<&'static str>,
     pub name: &'static str,
     pub variants: &'static [VariantInfo],
 }
 
-#[derive(PartialEq, Clone, Copy, Debug)]
+#[derive(PartialEq, Hash, Eq, Clone, Copy, Debug)]
 pub enum VariantInfo {
     Unit {
         name: &'static str,
@@ -153,13 +153,13 @@ pub enum VariantInfo {
     },
 }
 
-#[derive(PartialEq, Clone, Copy, Debug)]
+#[derive(PartialEq, Hash, Eq, Clone, Copy, Debug)]
 pub struct DynTraitInfo {
     pub traits: &'static [TypeInfo],
     pub lifetime: Option<&'static str>,
 }
 
-#[derive(PartialEq, Clone, Copy, Debug)]
+#[derive(PartialEq, Hash, Eq, Clone, Copy, Debug)]
 pub struct TraitInfo {
     pub name: &'static str,
     pub docs: Option<&'static str>,
@@ -168,14 +168,14 @@ pub struct TraitInfo {
     pub methods: &'static [FunctionInfo],
 }
 
-#[derive(PartialEq, Clone, Copy, Debug)]
+#[derive(PartialEq, Hash, Eq, Clone, Copy, Debug)]
 pub struct ConstInfo {
     pub name: &'static str,
     pub docs: Option<&'static str>,
     pub ty: TypeInfo,
 }
 
-#[derive(PartialEq, Clone, Copy, Debug)]
+#[derive(PartialEq, Hash, Eq, Clone, Copy, Debug)]
 pub struct FunctionInfo {
     pub name: &'static str,
     pub docs: Option<&'static str>,
@@ -184,13 +184,13 @@ pub struct FunctionInfo {
     pub generics: &'static [FunctionGeneric],
 }
 
-#[derive(PartialEq, Clone, Copy, Debug)]
+#[derive(PartialEq, Hash, Eq, Clone, Copy, Debug)]
 pub struct FunctionGeneric {
     pub name: &'static str,
     pub kind: GenericParamKind,
 }
 
-#[derive(PartialEq, Clone, Copy, Debug)]
+#[derive(PartialEq, Hash, Eq, Clone, Copy, Debug)]
 pub enum GenericParamKind {
     Type(GenericParamType),
     Lifetime(LifetimeParamType),
@@ -212,28 +212,28 @@ impl GenericParamKind {
     }
 }
 
-#[derive(PartialEq, Clone, Copy, Debug)]
+#[derive(PartialEq, Hash, Eq, Clone, Copy, Debug)]
 pub struct GenericParamType {
     pub bounds: &'static [GenericBound],
 }
 
-#[derive(PartialEq, Clone, Copy, Debug)]
+#[derive(PartialEq, Hash, Eq, Clone, Copy, Debug)]
 pub struct LifetimeParamType {
     pub outlives: &'static [&'static str],
 }
 
-#[derive(PartialEq, Clone, Copy, Debug)]
+#[derive(PartialEq, Hash, Eq, Clone, Copy, Debug)]
 pub struct GenericBound {
     pub trait_: fn() -> TraitInfo,
 }
 
-#[derive(PartialEq, Clone, Copy, Debug)]
+#[derive(PartialEq, Hash, Eq, Clone, Copy, Debug)]
 pub struct FunctionArg {
     pub name: &'static str,
     pub ty: TypeInfo,
 }
 
-#[derive(PartialEq, Clone, Copy, Debug)]
+#[derive(PartialEq, Hash, Eq, Clone, Copy, Debug)]
 pub struct AssocTypeInfo {
     pub name: &'static str,
     pub docs: Option<&'static str>,

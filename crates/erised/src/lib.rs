@@ -132,6 +132,7 @@ impl Mirror {
             }
         }
         Ok(quote!(
+            #[allow(dead_code)]
             pub fn to_reflect(#(#reflection_input),*) -> erised::ToReflect {
                 erised::ToReflect
             }
@@ -592,7 +593,7 @@ impl Mirror {
 
         for param in &func.generics.params {
             let generic_name = &param.name;
-            let mut kind: TokenStream = quote!();
+            let kind: TokenStream;
 
             match &param.kind {
                 rustdoc_types::GenericParamDefKind::Lifetime { outlives } => {
@@ -665,9 +666,9 @@ impl Mirror {
                         )?);
                     }
                     ItemEnum::AssocType {
-                        generics,
-                        bounds,
-                        default,
+                        generics: _,
+                        bounds: _,
+                        default: _,
                     } => {
                         assoc_types.push(quote!(erised::AssocTypeInfo {
                             name: #name,
