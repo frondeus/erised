@@ -56,10 +56,6 @@ pub trait MyTrait {
         F: for<'a> BorrowedTrait<'a>;
 }
 
-pub fn to_reflect(_: impl MyTrait, _: PlainStruct) -> erised::ToReflect {
-    erised::ToReflect
-}
-
 mod reflected;
 
 #[test]
@@ -216,8 +212,11 @@ fn test_type() {
                 }
             );
             assert_eq!(strukt.fields[5].name, "recurse");
-            let erised::WithGenericInfo { name, args } =
-                strukt.fields[5].ty.as_withgeneric().expect("With generic");
+            let erised::WithGenericInfo {
+                name,
+                args,
+                bindings,
+            } = strukt.fields[5].ty.as_withgeneric().expect("With generic");
             assert_eq!(name, "alloc::boxed::Box");
             let generic_args = (args)();
             assert_eq!(generic_args.len(), 1);
