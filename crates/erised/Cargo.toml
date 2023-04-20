@@ -9,6 +9,7 @@ edition = "2021"
 anyhow = "1.0.69"
 proc-macro2 = "1.0.51"
 quote = "1.0.23"
+rustdoc-json = "0.8.4"
 rustdoc-types = "0.20.0"
 serde = { version = "1.0.154", features = ["derive"] }
 serde_json = { version = "1.0.94", features = ["raw_value"] }

@@ -2,6 +2,7 @@
 name = "doc-reflect"
 version = "0.1.0"
 edition = "2021"
+exclude = ["erised_target"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [workspace]
@@ -13,3 +14,6 @@ anyhow = "1.0.69"
 rustdoc-types = "0.20.0"
 serde = { version = "1.0.154", features = ["derive"] }
 serde_json = { version = "1.0.94", features = ["raw_value"] }
+
+[build-dependencies]
+erised = {path="./crates/erised"}

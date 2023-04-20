@@ -1,4 +1,4 @@
-use std::{path::PathBuf, process::Command};
+use std::path::PathBuf;
 
 use anyhow::Context;
 use ext::{ItemEnumExt, OptionBoxGenericArgsExt};
@@ -29,29 +29,19 @@ pub struct Reflection {
 }
 
 impl Mirror {
-    pub fn build(name: &str, extra_doc_args: &[&'static str]) -> anyhow::Result<Self> {
-        let mut command_builder = Command::new("cargo");
+    pub fn build_opts(
+        opts: impl Fn(rustdoc_json::Builder) -> rustdoc_json::Builder,
+    ) -> anyhow::Result<Option<Self>> {
+        let builder = rustdoc_json::Builder::default()
+            .toolchain("nightly")
+            // .package_target(rustdoc_json::PackageTarget::Example("codegen".to_owned()))
+            .document_private_items(true);
 
-        command_builder.arg("+nightly").arg("rustdoc");
-
-        for extra_arg in extra_doc_args {
-            command_builder.arg(extra_arg);
-        }
-
-        let mut out = command_builder
-            .arg("--")
-            .arg("-Zunstable-options")
-            .arg("--output-format")
-            .arg("json")
-            .arg("--document-private-items")
-            // .arg("--document-hidden-items")
-            .spawn()?;
-
-        out.wait()?;
+        let json_path = opts(builder).build()?;
 
         let file = std::fs::OpenOptions::new()
             .read(true)
-            .open(format!("./target/doc/{name}.json"))
+            .open(&json_path)
             .context("Could not open target JSON documentation")?;
 
         let krate: Crate = serde_json::from_reader(file)?;
@@ -61,17 +51,31 @@ impl Mirror {
             .iter()
             .find(|(_path, val)| val.path == &["erised", "reflection", "ToReflect"])
             .map(|(p, _)| p)
-            .context("Failed to find reflection id")?
-            .clone();
+            .cloned();
+
+        let reflect_id = match reflect_id {
+            Some(id) => id,
+            None => {
+                eprintln!(
+                    "warn: Reflection crate did not find a single usage of erised::ToReflect"
+                );
+                eprintln!("It tried to load {json_path:?}");
+                return Ok(None);
+            }
+        };
 
         let root_crate = krate.index.get(&krate.root).context("Root crate")?;
         let root_crate_id = root_crate.crate_id;
 
-        Ok(Mirror {
+        Ok(Some(Mirror {
             krate,
             reflect_id,
             root_crate_id,
-        })
+        }))
+    }
+
+    pub fn build() -> anyhow::Result<Option<Self>> {
+        Self::build_opts(|o| o)
     }
 
     fn items_to_reflect(krate: &Crate, reflect_id: &Id) -> Vec<(PathBuf, Vec<Item>)> {

@@ -1,15 +1,33 @@
 use anyhow::Context;
-use std::{io::Write, process::Command};
+use std::io::Write;
 
 use crate::Mirror;
 
-pub fn build_reflection(name: &str, extra_doc_args: &[&'static str]) {
-    build_reflection_inner(name, extra_doc_args).expect("Reflection");
+pub use rustdoc_json::PackageTarget;
+
+pub fn build_reflection() -> anyhow::Result<()> {
+    let mirror = Mirror::build().context("Mirror build")?;
+    let mirror = match mirror {
+        Some(m) => m,
+        None => return Ok(()),
+    };
+    build_reflection_inner(mirror)?;
+    Ok(())
 }
 
-fn build_reflection_inner(name: &str, extra_doc_args: &[&'static str]) -> anyhow::Result<()> {
-    let mut mirror = Mirror::build(name, extra_doc_args).context("Mirror build")?;
+pub fn build_reflection_opts(
+    opts: impl Fn(rustdoc_json::Builder) -> rustdoc_json::Builder,
+) -> anyhow::Result<()> {
+    let mirror = Mirror::build_opts(opts).context("Mirror build")?;
+    let mirror = match mirror {
+        Some(m) => m,
+        None => return Ok(()),
+    };
+    build_reflection_inner(mirror)?;
+    Ok(())
+}
 
+fn build_reflection_inner(mut mirror: Mirror) -> anyhow::Result<()> {
     let stream = mirror.gen()?;
 
     for reflection in stream {
@@ -27,6 +45,6 @@ fn build_reflection_inner(name: &str, extra_doc_args: &[&'static str]) -> anyhow
         file.flush()?;
     }
 
-    Command::new("cargo").arg("fmt").output()?;
+    std::process::Command::new("cargo").arg("fmt").output()?;
     Ok(())
 }
