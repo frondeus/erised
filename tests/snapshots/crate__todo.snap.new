@@ -1,0 +1,35 @@
+---
+source: tests/crate.rs
+assertion_line: 17
+expression: info
+---
+fn test() {
+    erised::types::Crate {
+        root: || erised::types::Item {
+            krate: || erised::types::ExternalCrate {
+                name: "erised_tests",
+                html_root_url: None,
+            },
+            name: Some("erised_tests"),
+            span: Some(erised::types::Span {
+                filename: "src/lib.rs",
+                begin: (1usize, 0usize),
+                end: (53usize, 1usize),
+            }),
+            visibility: erised::types::Visibility::Public,
+            docs: None,
+            attrs: &[],
+            deprecation: None,
+            inner: erised::types::ItemEnum::Module(erised::types::Module {
+                is_crate: true,
+                items: &[],
+                is_stripped: false,
+            }),
+        },
+        crate_version: Some("0.1.0"),
+        all_items: &[],
+        summaries: &[],
+        external_crates: &[],
+    }
+}
+

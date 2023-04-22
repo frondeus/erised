@@ -1,5 +1,7 @@
-mod heap_types;
+pub mod heap_types;
 
-mod types;
+pub mod types;
 
 pub mod destruct;
+
+pub mod builder;

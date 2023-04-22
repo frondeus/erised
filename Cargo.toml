@@ -1,2 +1,15 @@
 [workspace]
 members = ["crates/*"]
+
+[package]
+name = "erised-tests"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0.70"
+erised= { path = "./crates/lib" }
+insta = "1.29.0"
+quote = "1.0.26"
