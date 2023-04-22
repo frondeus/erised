@@ -1,0 +1,5 @@
+---
+source: crates/macros_tests/src/lib.rs
+expression: static_info
+---
+erised :: types :: TypeInfo ("Foo")
