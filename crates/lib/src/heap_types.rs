@@ -187,6 +187,7 @@ pub enum TypeBindingKind {
 }
 
 #[derive(TypeInfo)]
+#[deprecated()]
 pub struct Id(pub String);
 
 #[derive(TypeInfo)]

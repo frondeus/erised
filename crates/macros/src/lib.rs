@@ -11,7 +11,7 @@ pub fn type_info(item: TokenStream) -> TokenStream {
         Err(e) => e.write_errors(),
         Ok(t) => t.gen(),
     };
-    println!("{}", type_info.to_string());
+    // println!("{}", type_info.to_string());
     TokenStream::from(type_info)
 }
 
