@@ -45,7 +45,7 @@ pub struct ExternalCrate {
 pub struct ItemSummary {
     /// Can be used to look up the name and html_root_url of the crate this item came from in the
     /// `external_crates` map.
-    pub crate_id: u32,
+    pub crate_id: Arc<ExternalCrate>,
     /// The list of path components for the fully qualified path of this item (e.g.
     /// `["std", "io", "lazy", "Lazy"]` for `std::io::lazy::Lazy`).
     ///
@@ -64,7 +64,7 @@ pub struct Item {
     pub id: Id,
     /// This can be used as a key to the `external_crates` map of [`Crate`] to see which crate
     /// this item came from.
-    pub crate_id: u32,
+    pub crate_id: Arc<ExternalCrate>,
     /// Some items such as impls don't have names.
     pub name: Option<String>,
     /// The source location of this item (absent if it came from a macro expansion or inline
@@ -702,87 +702,3 @@ pub struct Primitive {
     pub name: String,
     pub impls: Vec<Id>,
 }
-
-/*
-#[derive(TypeInfo)]
-pub enum ItemInfo {
-    Struct(StructInfo),
-}
-
-#[derive(TypeInfo)]
-pub enum TypeInfo {
-    /// Structs, enums, unions etc.
-    ResolvedPath(PathInfo),
-    /// `<Type as Trait>::Name` or `T::Item` where T: Iterator
-    QualifiedPath(QualifiedPathInfo),
-    /// capital letters between < and >
-    Generic(String),
-    /// Built in numeric (i*, u*, f*), bool and char
-    Primitive(String),
-    /// extern ABI fn
-    FunctionPointer(Box<FunctionPointerInfo>),
-    /// (String, i32),
-    Tuple(Vec<TypeInfo>),
-    /// [u32]
-    Slice(Box<TypeInfo>),
-    /// [u32; 15]
-    Array(ArrayInfo),
-    /// dyn Trait
-    DynTrait(DynTraitInfo),
-    /// impl Trait
-    ImplTrait(ImplTraitInfo),
-    /// *mut u32, *u8
-    RawPointer(RawPointerInfo),
-    /// &'a mut String, &'str
-    BorrowedRef(BorrowedRefInfo),
-    /// Infer: `_`
-    Infer,
-}
-
-#[derive(TypeInfo)]
-pub struct PathInfo {
-    /// Last segment of the path.
-    /// For example `Path` in `std::path::Path`
-    pub name: String,
-    /// Everything that led to this path
-    /// For example `std::path` in `std::path::Path`
-    pub prefix: String,
-    /// The item that this path points to
-    pub item: ItemInfo,
-    /// Generic arguments
-    /// For example `std::borrow::Cow<'static, str>`
-    ///                              ^^^^^^^^^^^^^^
-    pub args: Option<GenericArgsInfo>,
-}
-
-#[derive(TypeInfo)]
-pub enum GenericArgsInfo {
-    /// <'a, 32, B: Copy, C = u32>
-    AngleBracketed { args: Vec<GenericArgInfo> },
-    /// Fn(A, B) -> C
-    Parenthesized {
-        inputs: Vec<TypeInfo>,
-        output: Option<Box<TypeInfo>>,
-    },
-}
-
-#[derive(TypeInfo)]
-pub struct StructInfo {
-    pub docs: Option<String>,
-    pub name: String,
-    pub fields: Vec<StructFieldInfo>,
-}
-
-#[derive(TypeInfo)]
-pub struct StructFieldInfo {
-    pub name: String,
-    pub docs: Option<String>,
-    pub ty: TypeInfo,
-}
-
-#[derive(TypeInfo)]
-pub struct ArrayInfo {
-    pub ty: Box<TypeInfo>,
-    pub len: usize,
-}
-*/

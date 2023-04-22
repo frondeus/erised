@@ -48,7 +48,7 @@ impl TokenMatcher {
                         *cursor = next;
 
                         new.append(Group::new(Delimiter::Bracket, inner));
-                    } else if ident == "Box" {
+                    } else if ident == "Box" || ident == "Arc" {
                         new.append_all(quote!(fn () -> ));
 
                         let (_, mut next) = cursor.token_tree().expect("Expected < token");
@@ -56,7 +56,7 @@ impl TokenMatcher {
                         *cursor = next;
 
                         new.append_all(inner);
-                    } else if ident == "Option" || ident == "Arc" {
+                    } else if ident == "Option" {
                         let (_, mut next) = cursor.token_tree().expect("Expected < token");
                         let inner = self.gen_inner(&mut next);
                         *cursor = next;
