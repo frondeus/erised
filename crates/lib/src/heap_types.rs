@@ -3,6 +3,7 @@ use erised_macros::TypeInfo;
 
 use std::collections::HashMap;
 use std::path::PathBuf;
+use std::sync::Arc;
 
 /// rustdoc format-version.
 pub(crate) const FORMAT_VERSION: u32 = 24;
@@ -24,7 +25,7 @@ pub struct Crate {
     /// Maps IDs to fully qualified paths and other info helpful for generating links.
     pub paths: HashMap<Id, ItemSummary>,
     /// Maps `crate_id` of items to a crate name and html_root_url if it exists.
-    pub external_crates: HashMap<u32, ExternalCrate>,
+    pub external_crates: Vec<Arc<ExternalCrate>>,
     /// A single version number to be used in the future when making backwards incompatible changes
     /// to the JSON output.
     pub format_version: u32,

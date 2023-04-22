@@ -39,7 +39,8 @@ impl TypeInfoField {
         // TokenMatcher.gen_destruct(self.ty_quote())
 
         if TokenMatcher.is_destruct(self.ty_quote()) {
-            return quote!(erised::Destruct(#destructed));
+            // return quote!(erised::destruct::Destruct(#destructed));
+            return quote!(erised::destruct::ToTokens::to_tokens(#destructed));
         }
 
         quote!(#destructed)

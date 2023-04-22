@@ -116,3 +116,64 @@ mod tests {
         insta::assert_display_snapshot!(static_info);
     }
 }
+
+mod experiments {
+
+    use std::sync::Arc;
+
+    struct Foo {
+        i: Vec<Arc<String>>,
+        bar: Bar,
+    }
+
+    struct StaticFoo {
+        i: &'static [fn() -> &'static str],
+        bar: StaticBar,
+    }
+
+    impl erised::destruct::ToTokens for Foo {
+        fn to_tokens(&self) -> proc_macro2::TokenStream {
+            let &Self { i, bar } = &self;
+
+            let (i, bar) = (
+                erised::destruct::ToTokens::to_tokens(i),
+                erised::destruct::ToTokens::to_tokens(bar),
+            );
+
+            quote::quote!(StaticFoo { i: #i, bar: #bar })
+        }
+    }
+    impl quote::ToTokens for Foo {
+        fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+            use quote::TokenStreamExt;
+
+            tokens.append_all(erised::destruct::ToTokens::to_tokens(self));
+        }
+    }
+
+    struct Bar {
+        a: String,
+    }
+
+    struct StaticBar {
+        a: &'static str,
+    }
+
+    impl erised::destruct::ToTokens for Bar {
+        fn to_tokens(&self) -> proc_macro2::TokenStream {
+            let &Self { a } = &self;
+
+            let a = erised::destruct::ToTokens::to_tokens(a);
+
+            // tokens.append_all(quote::quote!(StaticFoo { i: &[|| "Foo"] }));
+            quote::quote!(StaticBar { a: #a })
+        }
+    }
+    impl quote::ToTokens for Bar {
+        fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+            use quote::TokenStreamExt;
+
+            tokens.append_all(erised::destruct::ToTokens::to_tokens(self));
+        }
+    }
+}

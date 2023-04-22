@@ -44,6 +44,7 @@ impl TypeInfo {
                     .iter()
                     .enumerate()
                     .map(|(idx, f)| f.gen_to_tokens(idx));
+
                 let fields: Vec<_> = fields
                     .iter()
                     .enumerate()
@@ -62,6 +63,9 @@ impl TypeInfo {
                     ast::Style::Struct => quote!(
                         let &Self { #(#fields),* } = &self;
                         let ( #(#fields),* ) = (#(#mapped_fields),*);
+                        // let #static_ident {
+                        //     #(#fields),*
+                        // } = &self.into();
                         quote::quote!(
                             erised::types::#ident {
                                 #(#construct),*
@@ -69,19 +73,22 @@ impl TypeInfo {
                         )
                     ),
                     ast::Style::Unit => quote!(quote::quote!(
-                        erised::types::#ident
+                    erised::types::#ident
                     )),
                 }
             }
         };
 
         quote!(
+            impl erised::destruct::ToTokens for #ident {
+                fn to_tokens(&self) -> proc_macro2::TokenStream {
+                    #destruct
+                }
+            }
             impl quote::ToTokens for #ident {
                 fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
                     use quote::TokenStreamExt;
-                    tokens.append_all({
-                        #destruct
-                    })
+                    tokens.append_all(erised::destruct::ToTokens::to_tokens(self))
                 }
             }
         )
