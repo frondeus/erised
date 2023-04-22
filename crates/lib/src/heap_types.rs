@@ -14,21 +14,27 @@ pub(crate) const FORMAT_VERSION: u32 = 24;
 #[derive(TypeInfo)]
 pub struct Crate {
     /// The id of the root [`Module`] item of the local crate.
-    pub root: Id,
+    pub root: Arc<Item>,
     /// The version string given to `--crate-version`, if any.
     pub crate_version: Option<String>,
     /// Whether or not the output includes private items.
     pub includes_private: bool,
     /// A collection of all items in the local crate as well as some external traits and their
     /// items that are referenced locally.
-    pub index: HashMap<Id, Item>,
+    pub items: Vec<Arc<Item>>,
     /// Maps IDs to fully qualified paths and other info helpful for generating links.
-    pub paths: HashMap<Id, ItemSummary>,
+    pub summaries: Vec<Arc<ItemSummary>>,
     /// Maps `crate_id` of items to a crate name and html_root_url if it exists.
     pub external_crates: Vec<Arc<ExternalCrate>>,
     /// A single version number to be used in the future when making backwards incompatible changes
     /// to the JSON output.
     pub format_version: u32,
+}
+
+#[derive(TypeInfo)]
+pub enum Identifiable {
+    Item(Arc<Item>),
+    Summary(Arc<ItemSummary>),
 }
 
 #[derive(TypeInfo)]
@@ -60,8 +66,6 @@ pub struct ItemSummary {
 
 #[derive(TypeInfo)]
 pub struct Item {
-    /// The unique identifier of this item. Can be used to find this item in various mappings.
-    pub id: Id,
     /// This can be used as a key to the `external_crates` map of [`Crate`] to see which crate
     /// this item came from.
     pub crate_id: Arc<ExternalCrate>,
@@ -77,7 +81,7 @@ pub struct Item {
     /// Some("") if there is some documentation but it is empty (EG `#[doc = ""]`).
     pub docs: Option<String>,
     /// This mapping resolves [intra-doc links](https://github.com/rust-lang/rfcs/blob/master/text/1946-intra-rustdoc-links.md) from the docstring to their IDs
-    pub links: HashMap<String, Id>,
+    pub links: HashMap<String, Identifiable>,
     /// Stringified versions of the attributes on this item (e.g. `"#[inline]"`)
     pub attrs: Vec<String>,
     pub deprecation: Option<Deprecation>,
@@ -110,7 +114,7 @@ pub enum Visibility {
     /// For `pub(in path)` visibility. `parent` is the module it's restricted to and `path` is how
     /// that module was referenced (like `"super::super"` or `"crate::foo::bar"`).
     Restricted {
-        parent: Id,
+        parent: Identifiable,
         path: String,
     },
 }
@@ -185,10 +189,6 @@ pub enum TypeBindingKind {
     Equality(Term),
     Constraint(Vec<GenericBound>),
 }
-
-#[derive(TypeInfo)]
-#[deprecated()]
-pub struct Id(pub String);
 
 #[derive(TypeInfo)]
 pub enum ItemKind {
@@ -270,7 +270,7 @@ pub enum ItemEnum {
 #[derive(TypeInfo)]
 pub struct Module {
     pub is_crate: bool,
-    pub items: Vec<Id>,
+    pub items: Vec<Identifiable>,
     /// If `true`, this module is not part of the public API, but it contains
     /// items that are re-exported as public API.
     pub is_stripped: bool,
@@ -280,15 +280,15 @@ pub struct Module {
 pub struct Union {
     pub generics: Generics,
     pub fields_stripped: bool,
-    pub fields: Vec<Id>,
-    pub impls: Vec<Id>,
+    pub fields: Vec<Identifiable>,
+    pub impls: Vec<Identifiable>,
 }
 
 #[derive(TypeInfo)]
 pub struct Struct {
     pub kind: StructKind,
     pub generics: Generics,
-    pub impls: Vec<Id>,
+    pub impls: Vec<Identifiable>,
 }
 
 #[derive(TypeInfo)]
@@ -308,7 +308,7 @@ pub enum StructKind {
     ///
     /// All [`Id`]'s will point to [`ItemEnum::StructField`]. Private and
     /// `#[doc(hidden)]` fields will be given as `None`
-    Tuple(Vec<Option<Id>>),
+    Tuple(Vec<Option<Identifiable>>),
     /// A struct with nammed fields.
     ///
     /// ```rust
@@ -316,7 +316,7 @@ pub enum StructKind {
     /// pub struct EmptyPlainStruct {}
     /// ```
     Plain {
-        fields: Vec<Id>,
+        fields: Vec<Identifiable>,
         fields_stripped: bool,
     },
 }
@@ -325,8 +325,8 @@ pub enum StructKind {
 pub struct Enum {
     pub generics: Generics,
     pub variants_stripped: bool,
-    pub variants: Vec<Id>,
-    pub impls: Vec<Id>,
+    pub variants: Vec<Identifiable>,
+    pub impls: Vec<Identifiable>,
 }
 
 #[derive(TypeInfo)]
@@ -359,7 +359,7 @@ pub enum VariantKind {
     ///     EmptyTupleVariant(),
     /// }
     /// ```
-    Tuple(Vec<Option<Id>>),
+    Tuple(Vec<Option<Identifiable>>),
     /// A variant with named fields.
     ///
     /// ```rust
@@ -369,7 +369,7 @@ pub enum VariantKind {
     /// }
     /// ```
     Struct {
-        fields: Vec<Id>,
+        fields: Vec<Identifiable>,
         fields_stripped: bool,
     },
 }
@@ -576,7 +576,7 @@ pub enum Type {
 #[derive(TypeInfo)]
 pub struct Path {
     pub name: String,
-    pub id: Id,
+    pub id: Identifiable,
     /// Generic arguments to the type
     /// ```test
     /// std::borrow::Cow<'static, str>
@@ -622,10 +622,10 @@ pub struct FnInput {
 pub struct Trait {
     pub is_auto: bool,
     pub is_unsafe: bool,
-    pub items: Vec<Id>,
+    pub items: Vec<Identifiable>,
     pub generics: Generics,
     pub bounds: Vec<GenericBound>,
-    pub implementations: Vec<Id>,
+    pub implementations: Vec<Identifiable>,
 }
 
 #[derive(TypeInfo)]
@@ -641,7 +641,7 @@ pub struct Impl {
     pub provided_trait_methods: Vec<String>,
     pub trait_: Option<Path>,
     pub for_: Type,
-    pub items: Vec<Id>,
+    pub items: Vec<Identifiable>,
     pub negative: bool,
     pub synthetic: bool,
     pub blanket_impl: Option<Type>,
@@ -658,7 +658,7 @@ pub struct Import {
     /// ```rust
     /// pub use i32 as my_i32;
     /// ```
-    pub id: Option<Id>,
+    pub id: Option<Identifiable>,
     /// Whether this import uses a glob: `use source::*;`
     pub glob: bool,
 }
@@ -701,5 +701,5 @@ pub struct Static {
 #[derive(TypeInfo)]
 pub struct Primitive {
     pub name: String,
-    pub impls: Vec<Id>,
+    pub impls: Vec<Identifiable>,
 }
