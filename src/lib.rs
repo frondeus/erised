@@ -5,6 +5,13 @@ use std::{
     process::{Command, Output, Stdio},
 };
 
+pub use erised::heap_types::*;
+
+// pub struct Foo {
+//     pub krate: erised::heap_types::Crate,
+// }
+pub fn test(t: Crate) {}
+
 pub fn pretty_print_item(tokens: impl ToTokens) -> Result<String, Error> {
     pretty_print(quote::quote!(
         fn test() {

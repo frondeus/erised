@@ -13,7 +13,7 @@ use crate::type_info::matcher::TokenMatcher;
 #[darling(attributes(type_info))]
 pub struct TypeInfoField {
     ident: Option<Ident>,
-    ty: Type,
+    pub(crate) ty: Type,
 }
 
 impl TypeInfoField {

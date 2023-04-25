@@ -10,7 +10,7 @@ pub use crate::heap_types::{
     StaticGenericArgs as GenericArgs, StaticGenericBound as GenericBound,
     StaticGenericParamDef as GenericParamDef, StaticGenericParamDefKind as GenericParamDefKind,
     StaticGenerics as Generics, StaticHeader as Header, StaticImpl as Impl, StaticImport as Import,
-    StaticItem as Item, StaticItemEnum as ItemEnum, StaticItemKind as ItemKind,
+    StaticItem as Item, StaticItemKind as ItemKind, StaticItemMeta as ItemMeta,
     StaticItemSummary as ItemSummary, StaticMacroKind as MacroKind, StaticModule as Module,
     StaticOpaqueTy as OpaqueTy, StaticPath as Path, StaticPolyTrait as PolyTrait,
     StaticPrimitive as Primitive, StaticProcMacro as ProcMacro, StaticSpan as Span,

@@ -35,11 +35,15 @@ pub struct Builder {
 #[derive(Default)]
 pub(crate) struct Cache {
     items: HashMap<Id, Arc<Item>>,
+    summaries: HashMap<Id, Arc<ItemSummary>>,
     crates: HashMap<u32, Arc<ExternalCrate>>,
 }
 
 mod crates;
+mod generics;
 mod items;
+mod paths;
+mod types;
 
 impl Builder {
     pub fn load(
@@ -95,7 +99,11 @@ impl Builder {
     pub fn build(self) -> Result<Crate> {
         let mut cache = Default::default();
         Ok(Crate {
-            root: self.get_item(&mut cache, &self.source.root)?,
+            root: (*self.get_item(&mut cache, &self.source.root)?)
+                .clone()
+                .as_module()
+                .expect("Module")
+                .into(),
             crate_version: self.source.crate_version,
             all_items: vec![],
             summaries: vec![],

@@ -1,0 +1,451 @@
+---
+source: tests/crate.rs
+expression: info
+---
+fn test() {
+    erised::types::Crate {
+        root: || erised::types::Module {
+            name: "erised_tests",
+            meta: erised::types::ItemMeta {
+                krate: || erised::types::ExternalCrate {
+                    name: "erised_tests",
+                    html_root_url: None,
+                },
+                span: Some(erised::types::Span {
+                    filename: "src/lib.rs",
+                    begin: (1usize, 0usize),
+                    end: (60usize, 1usize),
+                }),
+                visibility: erised::types::Visibility::Public,
+                docs: None,
+                attrs: &[],
+                deprecation: None,
+            },
+            is_crate: true,
+            items: &[
+                erised::types::Identifiable::Item(|| {
+                    erised::types::Item::Function(erised::types::Function {
+                        name: "test",
+                        meta: erised::types::ItemMeta {
+                            krate: || erised::types::ExternalCrate {
+                                name: "erised_tests",
+                                html_root_url: None,
+                            },
+                            span: Some(erised::types::Span {
+                                filename: "src/lib.rs",
+                                begin: (13usize, 0usize),
+                                end: (13usize, 24usize),
+                            }),
+                            visibility: erised::types::Visibility::Public,
+                            docs: None,
+                            attrs: &[],
+                            deprecation: None,
+                        },
+                        decl: erised::types::FnDecl {
+                            inputs: &[erised::types::FnInput {
+                                pat: "t",
+                                ty: erised::types::Type::ResolvedPath(erised::types::Path {
+                                    name: "Crate",
+                                    prefix: "",
+                                    target: erised::types::Identifiable::Summary(|| {
+                                        erised::types::ItemSummary {
+                                            krate: || erised::types::ExternalCrate {
+                                                name: "erised",
+                                                html_root_url: None,
+                                            },
+                                            path: &["erised", "heap_types", "Crate"],
+                                            kind: erised::types::ItemKind::Struct,
+                                        }
+                                    }),
+                                    args: Some(|| erised::types::GenericArgs::AngleBracketed {
+                                        args: &[],
+                                        bindings: &[],
+                                    }),
+                                }),
+                            }],
+                            output: None,
+                            c_variadic: false,
+                        },
+                        generics: erised::types::Generics {
+                            params: &[],
+                            where_predicates: &[],
+                        },
+                        header: erised::types::Header {
+                            const_: false,
+                            unsafe_: false,
+                            async_: false,
+                            abi: erised::types::Abi::Rust,
+                        },
+                        has_body: true,
+                    })
+                }),
+                erised::types::Identifiable::Item(|| {
+                    erised::types::Item::Function(erised::types::Function {
+                        name: "pretty_print_item",
+                        meta: erised::types::ItemMeta {
+                            krate: || erised::types::ExternalCrate {
+                                name: "erised_tests",
+                                html_root_url: None,
+                            },
+                            span: Some(erised::types::Span {
+                                filename: "src/lib.rs",
+                                begin: (15usize, 0usize),
+                                end: (21usize, 1usize),
+                            }),
+                            visibility: erised::types::Visibility::Public,
+                            docs: None,
+                            attrs: &[],
+                            deprecation: None,
+                        },
+                        decl: erised::types::FnDecl {
+                            inputs: &[erised::types::FnInput {
+                                pat: "tokens",
+                                ty: erised::types::Type::ImplTrait(&[
+                                    erised::types::GenericBound::TraitBound {
+                                        trait_: erised::types::Path {
+                                            name: "ToTokens",
+                                            prefix: "",
+                                            target: erised::types::Identifiable::Summary(|| {
+                                                erised::types::ItemSummary {
+                                                    krate: || erised::types::ExternalCrate {
+                                                        name: "quote",
+                                                        html_root_url: Some(
+                                                            "https://docs.rs/quote/1.0.26/",
+                                                        ),
+                                                    },
+                                                    path: &["quote", "to_tokens", "ToTokens"],
+                                                    kind: erised::types::ItemKind::Trait,
+                                                }
+                                            }),
+                                            args: Some(|| {
+                                                erised::types::GenericArgs::AngleBracketed {
+                                                    args: &[],
+                                                    bindings: &[],
+                                                }
+                                            }),
+                                        },
+                                        generic_params: &[],
+                                        modifier: erised::types::TraitBoundModifier::None,
+                                    },
+                                ]),
+                            }],
+                            output: Some(erised::types::Type::ResolvedPath(erised::types::Path {
+                                name: "Result",
+                                prefix: "",
+                                target: erised::types::Identifiable::Summary(|| {
+                                    erised::types::ItemSummary {
+                                        krate: || erised::types::ExternalCrate {
+                                            name: "core",
+                                            html_root_url: Some(
+                                                "https://doc.rust-lang.org/nightly/",
+                                            ),
+                                        },
+                                        path: &["core", "result", "Result"],
+                                        kind: erised::types::ItemKind::Enum,
+                                    }
+                                }),
+                                args: Some(|| erised::types::GenericArgs::AngleBracketed {
+                                    args: &[
+                                        erised::types::GenericArg::Type(
+                                            erised::types::Type::ResolvedPath(
+                                                erised::types::Path {
+                                                    name: "String",
+                                                    prefix: "",
+                                                    target: erised::types::Identifiable::Summary(
+                                                        || erised::types::ItemSummary {
+                                                            krate: || {
+                                                                erised :: types :: ExternalCrate { name : "alloc" , html_root_url : Some ("https://doc.rust-lang.org/nightly/") }
+                                                            },
+                                                            path: &["alloc", "string", "String"],
+                                                            kind: erised::types::ItemKind::Struct,
+                                                        },
+                                                    ),
+                                                    args: Some(|| {
+                                                        erised::types::GenericArgs::AngleBracketed {
+                                                            args: &[],
+                                                            bindings: &[],
+                                                        }
+                                                    }),
+                                                },
+                                            ),
+                                        ),
+                                        erised::types::GenericArg::Type(
+                                            erised::types::Type::ResolvedPath(
+                                                erised::types::Path {
+                                                    name: "Error",
+                                                    prefix: "",
+                                                    target: erised::types::Identifiable::Summary(
+                                                        || erised::types::ItemSummary {
+                                                            krate: || {
+                                                                erised :: types :: ExternalCrate { name : "anyhow" , html_root_url : Some ("https://docs.rs/anyhow/1.0.70/") }
+                                                            },
+                                                            path: &["anyhow", "Error"],
+                                                            kind: erised::types::ItemKind::Struct,
+                                                        },
+                                                    ),
+                                                    args: Some(|| {
+                                                        erised::types::GenericArgs::AngleBracketed {
+                                                            args: &[],
+                                                            bindings: &[],
+                                                        }
+                                                    }),
+                                                },
+                                            ),
+                                        ),
+                                    ],
+                                    bindings: &[],
+                                }),
+                            })),
+                            c_variadic: false,
+                        },
+                        generics: erised::types::Generics {
+                            params: &[erised::types::GenericParamDef {
+                                name: "impl ToTokens",
+                                kind: erised::types::GenericParamDefKind::Type {
+                                    bounds: &[erised::types::GenericBound::TraitBound {
+                                        trait_: erised::types::Path {
+                                            name: "ToTokens",
+                                            prefix: "",
+                                            target: erised::types::Identifiable::Summary(|| {
+                                                erised::types::ItemSummary {
+                                                    krate: || erised::types::ExternalCrate {
+                                                        name: "quote",
+                                                        html_root_url: Some(
+                                                            "https://docs.rs/quote/1.0.26/",
+                                                        ),
+                                                    },
+                                                    path: &["quote", "to_tokens", "ToTokens"],
+                                                    kind: erised::types::ItemKind::Trait,
+                                                }
+                                            }),
+                                            args: Some(|| {
+                                                erised::types::GenericArgs::AngleBracketed {
+                                                    args: &[],
+                                                    bindings: &[],
+                                                }
+                                            }),
+                                        },
+                                        generic_params: &[],
+                                        modifier: erised::types::TraitBoundModifier::None,
+                                    }],
+                                    default: None,
+                                    synthetic: true,
+                                },
+                            }],
+                            where_predicates: &[],
+                        },
+                        header: erised::types::Header {
+                            const_: false,
+                            unsafe_: false,
+                            async_: false,
+                            abi: erised::types::Abi::Rust,
+                        },
+                        has_body: true,
+                    })
+                }),
+                erised::types::Identifiable::Item(|| {
+                    erised::types::Item::Function(erised::types::Function {
+                        name: "pretty_print",
+                        meta: erised::types::ItemMeta {
+                            krate: || erised::types::ExternalCrate {
+                                name: "erised_tests",
+                                html_root_url: None,
+                            },
+                            span: Some(erised::types::Span {
+                                filename: "src/lib.rs",
+                                begin: (24usize, 0usize),
+                                end: (60usize, 1usize),
+                            }),
+                            visibility: erised::types::Visibility::Public,
+                            docs: Some("Use `rustfmt` to pretty-print the tokens."),
+                            attrs: &[],
+                            deprecation: None,
+                        },
+                        decl: erised::types::FnDecl {
+                            inputs: &[erised::types::FnInput {
+                                pat: "tokens",
+                                ty: erised::types::Type::ImplTrait(&[
+                                    erised::types::GenericBound::TraitBound {
+                                        trait_: erised::types::Path {
+                                            name: "ToTokens",
+                                            prefix: "",
+                                            target: erised::types::Identifiable::Summary(|| {
+                                                erised::types::ItemSummary {
+                                                    krate: || erised::types::ExternalCrate {
+                                                        name: "quote",
+                                                        html_root_url: Some(
+                                                            "https://docs.rs/quote/1.0.26/",
+                                                        ),
+                                                    },
+                                                    path: &["quote", "to_tokens", "ToTokens"],
+                                                    kind: erised::types::ItemKind::Trait,
+                                                }
+                                            }),
+                                            args: Some(|| {
+                                                erised::types::GenericArgs::AngleBracketed {
+                                                    args: &[],
+                                                    bindings: &[],
+                                                }
+                                            }),
+                                        },
+                                        generic_params: &[],
+                                        modifier: erised::types::TraitBoundModifier::None,
+                                    },
+                                ]),
+                            }],
+                            output: Some(erised::types::Type::ResolvedPath(erised::types::Path {
+                                name: "Result",
+                                prefix: "",
+                                target: erised::types::Identifiable::Summary(|| {
+                                    erised::types::ItemSummary {
+                                        krate: || erised::types::ExternalCrate {
+                                            name: "core",
+                                            html_root_url: Some(
+                                                "https://doc.rust-lang.org/nightly/",
+                                            ),
+                                        },
+                                        path: &["core", "result", "Result"],
+                                        kind: erised::types::ItemKind::Enum,
+                                    }
+                                }),
+                                args: Some(|| erised::types::GenericArgs::AngleBracketed {
+                                    args: &[
+                                        erised::types::GenericArg::Type(
+                                            erised::types::Type::ResolvedPath(
+                                                erised::types::Path {
+                                                    name: "String",
+                                                    prefix: "",
+                                                    target: erised::types::Identifiable::Summary(
+                                                        || erised::types::ItemSummary {
+                                                            krate: || {
+                                                                erised :: types :: ExternalCrate { name : "alloc" , html_root_url : Some ("https://doc.rust-lang.org/nightly/") }
+                                                            },
+                                                            path: &["alloc", "string", "String"],
+                                                            kind: erised::types::ItemKind::Struct,
+                                                        },
+                                                    ),
+                                                    args: Some(|| {
+                                                        erised::types::GenericArgs::AngleBracketed {
+                                                            args: &[],
+                                                            bindings: &[],
+                                                        }
+                                                    }),
+                                                },
+                                            ),
+                                        ),
+                                        erised::types::GenericArg::Type(
+                                            erised::types::Type::ResolvedPath(
+                                                erised::types::Path {
+                                                    name: "Error",
+                                                    prefix: "",
+                                                    target: erised::types::Identifiable::Summary(
+                                                        || erised::types::ItemSummary {
+                                                            krate: || {
+                                                                erised :: types :: ExternalCrate { name : "anyhow" , html_root_url : Some ("https://docs.rs/anyhow/1.0.70/") }
+                                                            },
+                                                            path: &["anyhow", "Error"],
+                                                            kind: erised::types::ItemKind::Struct,
+                                                        },
+                                                    ),
+                                                    args: Some(|| {
+                                                        erised::types::GenericArgs::AngleBracketed {
+                                                            args: &[],
+                                                            bindings: &[],
+                                                        }
+                                                    }),
+                                                },
+                                            ),
+                                        ),
+                                    ],
+                                    bindings: &[],
+                                }),
+                            })),
+                            c_variadic: false,
+                        },
+                        generics: erised::types::Generics {
+                            params: &[erised::types::GenericParamDef {
+                                name: "impl ToTokens",
+                                kind: erised::types::GenericParamDefKind::Type {
+                                    bounds: &[erised::types::GenericBound::TraitBound {
+                                        trait_: erised::types::Path {
+                                            name: "ToTokens",
+                                            prefix: "",
+                                            target: erised::types::Identifiable::Summary(|| {
+                                                erised::types::ItemSummary {
+                                                    krate: || erised::types::ExternalCrate {
+                                                        name: "quote",
+                                                        html_root_url: Some(
+                                                            "https://docs.rs/quote/1.0.26/",
+                                                        ),
+                                                    },
+                                                    path: &["quote", "to_tokens", "ToTokens"],
+                                                    kind: erised::types::ItemKind::Trait,
+                                                }
+                                            }),
+                                            args: Some(|| {
+                                                erised::types::GenericArgs::AngleBracketed {
+                                                    args: &[],
+                                                    bindings: &[],
+                                                }
+                                            }),
+                                        },
+                                        generic_params: &[],
+                                        modifier: erised::types::TraitBoundModifier::None,
+                                    }],
+                                    default: None,
+                                    synthetic: true,
+                                },
+                            }],
+                            where_predicates: &[],
+                        },
+                        header: erised::types::Header {
+                            const_: false,
+                            unsafe_: false,
+                            async_: false,
+                            abi: erised::types::Abi::Rust,
+                        },
+                        has_body: true,
+                    })
+                }),
+                erised::types::Identifiable::Item(|| {
+                    erised::types::Item::Import(erised::types::Import {
+                        meta: erised::types::ItemMeta {
+                            krate: || erised::types::ExternalCrate {
+                                name: "erised_tests",
+                                html_root_url: None,
+                            },
+                            span: Some(erised::types::Span {
+                                filename: "src/lib.rs",
+                                begin: (8usize, 0usize),
+                                end: (8usize, 30usize),
+                            }),
+                            visibility: erised::types::Visibility::Public,
+                            docs: None,
+                            attrs: &[],
+                            deprecation: None,
+                        },
+                        source: "erised::heap_types",
+                        name: "heap_types",
+                        target: Some(erised::types::Identifiable::Summary(|| {
+                            erised::types::ItemSummary {
+                                krate: || erised::types::ExternalCrate {
+                                    name: "erised",
+                                    html_root_url: None,
+                                },
+                                path: &["erised", "heap_types"],
+                                kind: erised::types::ItemKind::Module,
+                            }
+                        })),
+                        glob: true,
+                    })
+                }),
+            ],
+            is_stripped: false,
+        },
+        crate_version: Some("0.1.0"),
+        all_items: &[],
+        summaries: &[],
+        external_crates: &[],
+    }
+}
+

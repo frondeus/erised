@@ -24,6 +24,22 @@ impl TypeInfo {
     fn gen_derive(&self) -> TokenStream2 {
         quote!(#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)])
     }
+
+    fn gen_extra(&self) -> TokenStream2 {
+        let ident = &self.ident;
+        match &self.data {
+            ast::Data::Enum(variants) => {
+                let variants = variants.iter().filter_map(|v| v.gen_as());
+                quote!(
+                    impl #ident {
+                        #(#variants)*
+                    }
+                )
+            }
+            ast::Data::Struct(_) => quote!(),
+        }
+    }
+
     fn gen_to_tokens(&self) -> TokenStream2 {
         let ident = &self.ident;
 
@@ -102,6 +118,7 @@ impl TypeInfo {
         let derive = self.gen_derive();
         let ident = self.static_ident();
         let to_tokens = self.gen_to_tokens();
+        let extra = self.gen_extra();
 
         let data = match &self.data {
             ast::Data::Enum(variants) => {
@@ -137,6 +154,7 @@ impl TypeInfo {
             #derive
             #data
             #to_tokens
+            #extra
         )
     }
 }

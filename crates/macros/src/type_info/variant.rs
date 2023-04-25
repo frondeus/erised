@@ -1,6 +1,7 @@
 use darling::{ast, FromVariant};
+use inflector::Inflector;
 use proc_macro2::TokenStream;
-use quote::quote;
+use quote::{format_ident, quote};
 use syn::Ident;
 
 use super::field::TypeInfoField;
@@ -32,6 +33,44 @@ impl TypeInfoVariant {
             ast::Style::Unit => quote!(
                 Self::#ident
             ),
+        }
+    }
+
+    pub fn gen_as(&self) -> Option<TokenStream> {
+        let ident = &self.ident;
+        let style = &self.fields.style;
+
+        let as_ident = format_ident!("as_{}", ident.to_string().to_camel_case());
+        let fields = &self.fields;
+
+        match style {
+            ast::Style::Tuple => {
+                if fields.len() == 1 {
+                    let field = self.fields.fields.first().unwrap();
+                    let field_ty = &field.ty;
+
+                    Some(quote!(
+                        pub fn #as_ident(self) -> Option<#field_ty> {
+                            match self {
+                                Self::#ident(i) => Some(i),
+                                _ => None
+                            }
+                        }
+                    ))
+                } else {
+                    None
+                }
+            }
+            ast::Style::Struct => None,
+            ast::Style::Unit => Some(quote!(
+
+                pub fn #as_ident(self) -> Option<()> {
+                    match self {
+                        Self::#ident => Some(()),
+                        _ => None
+                    }
+                }
+            )),
         }
     }
 

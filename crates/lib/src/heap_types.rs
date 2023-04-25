@@ -11,10 +11,10 @@ pub(crate) const FORMAT_VERSION: u32 = 24;
 /// A `Crate` is the root of the emitted JSON blob. It contains all type/documentation information
 /// about the language items in the local crate, as well as info about external items to allow
 /// tools to find or link to them.
-#[derive(Debug, TypeInfo)]
+#[derive(Debug, Clone, TypeInfo)]
 pub struct Crate {
     /// The id of the root [`Module`] item of the local crate.
-    pub root: Arc<Item>,
+    pub root: Arc<Module>,
     /// The version string given to `--crate-version`, if any.
     pub crate_version: Option<String>,
     /// A collection of all items in the local crate as well as some external traits and their
@@ -26,13 +26,13 @@ pub struct Crate {
     pub external_crates: Vec<Arc<ExternalCrate>>,
 }
 
-#[derive(Debug, TypeInfo)]
+#[derive(Debug, Clone, TypeInfo)]
 pub enum Identifiable {
     Item(Arc<Item>),
     Summary(Arc<ItemSummary>),
 }
 
-#[derive(Debug, TypeInfo)]
+#[derive(Debug, Clone, TypeInfo)]
 pub struct ExternalCrate {
     pub name: String,
     pub html_root_url: Option<String>,
@@ -42,11 +42,11 @@ pub struct ExternalCrate {
 /// information. This struct should contain enough to generate a link/reference to the item in
 /// question, or can be used by a tool that takes the json output of multiple crates to find
 /// the actual item definition with all the relevant info.
-#[derive(Debug, TypeInfo)]
+#[derive(Debug, Clone, TypeInfo)]
 pub struct ItemSummary {
     /// Can be used to look up the name and html_root_url of the crate this item came from in the
     /// `external_crates` map.
-    pub crate_id: Arc<ExternalCrate>,
+    pub krate: Arc<ExternalCrate>,
     /// The list of path components for the fully qualified path of this item (e.g.
     /// `["std", "io", "lazy", "Lazy"]` for `std::io::lazy::Lazy`).
     ///
@@ -59,13 +59,11 @@ pub struct ItemSummary {
     pub kind: ItemKind,
 }
 
-#[derive(Debug, TypeInfo)]
-pub struct Item {
+#[derive(Debug, Clone, TypeInfo)]
+pub struct ItemMeta {
     /// This can be used as a key to the `external_crates` map of [`Crate`] to see which crate
     /// this item came from.
     pub krate: Arc<ExternalCrate>,
-    /// Some items such as impls don't have names.
-    pub name: Option<String>,
     /// The source location of this item (absent if it came from a macro expansion or inline
     /// assembly).
     pub span: Option<Span>,
@@ -78,10 +76,31 @@ pub struct Item {
     /// Stringified versions of the attributes on this item (e.g. `"#[inline]"`)
     pub attrs: Vec<String>,
     pub deprecation: Option<Deprecation>,
-    pub inner: ItemEnum,
 }
 
-#[derive(Debug, TypeInfo)]
+// #[derive(Debug, Clone, TypeInfo)]
+// pub struct Item {
+//     /// This can be used as a key to the `external_crates` map of [`Crate`] to see which crate
+//     /// this item came from.
+//     pub krate: Arc<ExternalCrate>,
+//     /// Some items such as impls don't have names.
+//     pub name: Option<String>,
+//     /// The source location of this item (absent if it came from a macro expansion or inline
+//     /// assembly).
+//     pub span: Option<Span>,
+//     /// By default all documented items are public, but you can tell rustdoc to output private items
+//     /// so this field is needed to differentiate.
+//     pub visibility: Visibility,
+//     /// The full markdown docstring of this item. Absent if there is no documentation at all,
+//     /// Some("") if there is some documentation but it is empty (EG `#[doc = ""]`).
+//     pub docs: Option<String>,
+//     /// Stringified versions of the attributes on this item (e.g. `"#[inline]"`)
+//     pub attrs: Vec<String>,
+//     pub deprecation: Option<Deprecation>,
+//     pub inner: ItemEnum,
+// }
+
+#[derive(Debug, Clone, TypeInfo)]
 pub struct Span {
     /// The path to the source file for this span relative to the path `rustdoc` was invoked with.
     pub filename: PathBuf,
@@ -91,13 +110,13 @@ pub struct Span {
     pub end: (usize, usize),
 }
 
-#[derive(Debug, TypeInfo)]
+#[derive(Debug, Clone, TypeInfo)]
 pub struct Deprecation {
     pub since: Option<String>,
     pub note: Option<String>,
 }
 
-#[derive(Debug, TypeInfo)]
+#[derive(Debug, Clone, TypeInfo)]
 pub enum Visibility {
     Public,
     /// For the most part items are private by default. The exceptions are associated items of
@@ -112,7 +131,7 @@ pub enum Visibility {
     },
 }
 
-#[derive(Debug, TypeInfo)]
+#[derive(Debug, Clone, TypeInfo)]
 pub struct DynTrait {
     /// All the traits implemented. One of them is the vtable, and the rest must be auto traits.
     pub traits: Vec<PolyTrait>,
@@ -126,7 +145,7 @@ pub struct DynTrait {
     pub lifetime: Option<String>,
 }
 
-#[derive(Debug, TypeInfo)]
+#[derive(Debug, Clone, TypeInfo)]
 /// A trait and potential HRTBs
 pub struct PolyTrait {
     pub trait_: Path,
@@ -140,7 +159,7 @@ pub struct PolyTrait {
     pub generic_params: Vec<GenericParamDef>,
 }
 
-#[derive(Debug, TypeInfo)]
+#[derive(Debug, Clone, TypeInfo)]
 pub enum GenericArgs {
     /// <'a, 32, B: Copy, C = u32>
     AngleBracketed {
@@ -154,7 +173,7 @@ pub enum GenericArgs {
     },
 }
 
-#[derive(Debug, TypeInfo)]
+#[derive(Debug, Clone, TypeInfo)]
 pub enum GenericArg {
     Lifetime(String),
     Type(Type),
@@ -162,7 +181,7 @@ pub enum GenericArg {
     Infer,
 }
 
-#[derive(Debug, TypeInfo)]
+#[derive(Debug, Clone, TypeInfo)]
 pub struct Constant {
     pub type_: Type,
     pub expr: String,
@@ -170,20 +189,20 @@ pub struct Constant {
     pub is_literal: bool,
 }
 
-#[derive(Debug, TypeInfo)]
+#[derive(Debug, Clone, TypeInfo)]
 pub struct TypeBinding {
     pub name: String,
     pub args: GenericArgs,
     pub binding: TypeBindingKind,
 }
 
-#[derive(Debug, TypeInfo)]
+#[derive(Debug, Clone, TypeInfo)]
 pub enum TypeBindingKind {
     Equality(Term),
     Constraint(Vec<GenericBound>),
 }
 
-#[derive(Debug, TypeInfo)]
+#[derive(Debug, Clone, TypeInfo)]
 pub enum ItemKind {
     Module,
     ExternCrate,
@@ -211,10 +230,11 @@ pub enum ItemKind {
     Keyword,
 }
 
-#[derive(Debug, TypeInfo)]
-pub enum ItemEnum {
+#[derive(Debug, Clone, TypeInfo)]
+pub enum Item {
     Module(Module),
     ExternCrate {
+        meta: ItemMeta,
         name: String,
         rename: Option<String>,
     },
@@ -248,11 +268,13 @@ pub enum ItemEnum {
     Primitive(Primitive),
 
     AssocConst {
+        meta: ItemMeta,
         type_: Type,
         /// e.g. `const X: usize = 5;`
         default: Option<String>,
     },
     AssocType {
+        meta: ItemMeta,
         generics: Generics,
         bounds: Vec<GenericBound>,
         /// e.g. `type X = usize;`
@@ -260,8 +282,10 @@ pub enum ItemEnum {
     },
 }
 
-#[derive(Debug, TypeInfo)]
+#[derive(Debug, Clone, TypeInfo)]
 pub struct Module {
+    pub name: String,
+    pub meta: ItemMeta,
     pub is_crate: bool,
     pub items: Vec<Identifiable>,
     /// If `true`, this module is not part of the public API, but it contains
@@ -269,7 +293,7 @@ pub struct Module {
     pub is_stripped: bool,
 }
 
-#[derive(Debug, TypeInfo)]
+#[derive(Debug, Clone, TypeInfo)]
 pub struct Union {
     pub generics: Generics,
     pub fields_stripped: bool,
@@ -277,14 +301,14 @@ pub struct Union {
     pub impls: Vec<Identifiable>,
 }
 
-#[derive(Debug, TypeInfo)]
+#[derive(Debug, Clone, TypeInfo)]
 pub struct Struct {
     pub kind: StructKind,
     pub generics: Generics,
     pub impls: Vec<Identifiable>,
 }
 
-#[derive(Debug, TypeInfo)]
+#[derive(Debug, Clone, TypeInfo)]
 pub enum StructKind {
     /// A struct with no fields and no parentheses.
     ///
@@ -314,7 +338,7 @@ pub enum StructKind {
     },
 }
 
-#[derive(Debug, TypeInfo)]
+#[derive(Debug, Clone, TypeInfo)]
 pub struct Enum {
     pub generics: Generics,
     pub variants_stripped: bool,
@@ -322,7 +346,7 @@ pub struct Enum {
     pub impls: Vec<Identifiable>,
 }
 
-#[derive(Debug, TypeInfo)]
+#[derive(Debug, Clone, TypeInfo)]
 pub struct Variant {
     /// Whether the variant is plain, a tuple-like, or struct-like. Contains the fields.
     pub kind: VariantKind,
@@ -330,7 +354,7 @@ pub struct Variant {
     pub discriminant: Option<Discriminant>,
 }
 
-#[derive(Debug, TypeInfo)]
+#[derive(Debug, Clone, TypeInfo)]
 pub enum VariantKind {
     /// A variant with no parentheses
     ///
@@ -367,7 +391,7 @@ pub enum VariantKind {
     },
 }
 
-#[derive(Debug, TypeInfo)]
+#[derive(Debug, Clone, TypeInfo)]
 pub struct Discriminant {
     /// The expression that produced the discriminant.
     ///
@@ -384,7 +408,7 @@ pub struct Discriminant {
     pub value: String,
 }
 
-#[derive(Debug, TypeInfo)]
+#[derive(Debug, Clone, TypeInfo)]
 pub struct Header {
     pub const_: bool,
     pub unsafe_: bool,
@@ -392,7 +416,7 @@ pub struct Header {
     pub abi: Abi,
 }
 
-#[derive(Debug, TypeInfo)]
+#[derive(Debug, Clone, TypeInfo)]
 pub enum Abi {
     // We only have a concrete listing here for stable ABI's because their are so many
     // See rustc_ast_passes::feature_gate::PostExpansionVisitor::check_abi for the list
@@ -409,27 +433,29 @@ pub enum Abi {
 }
 
 /// Represents a function (including methods and other associated functions)
-#[derive(Debug, TypeInfo)]
+#[derive(Debug, Clone, TypeInfo)]
 pub struct Function {
+    pub name: String,
+    pub meta: ItemMeta,
     pub decl: FnDecl,
     pub generics: Generics,
     pub header: Header,
     pub has_body: bool,
 }
 
-#[derive(Debug, TypeInfo)]
+#[derive(Debug, Clone, TypeInfo)]
 pub struct Generics {
     pub params: Vec<GenericParamDef>,
     pub where_predicates: Vec<WherePredicate>,
 }
 
-#[derive(Debug, TypeInfo)]
+#[derive(Debug, Clone, TypeInfo)]
 pub struct GenericParamDef {
     pub name: String,
     pub kind: GenericParamDefKind,
 }
 
-#[derive(Debug, TypeInfo)]
+#[derive(Debug, Clone, TypeInfo)]
 pub enum GenericParamDefKind {
     Lifetime {
         outlives: Vec<String>,
@@ -468,7 +494,7 @@ pub enum GenericParamDefKind {
     },
 }
 
-#[derive(Debug, TypeInfo)]
+#[derive(Debug, Clone, TypeInfo)]
 pub enum WherePredicate {
     BoundPredicate {
         type_: Type,
@@ -492,7 +518,7 @@ pub enum WherePredicate {
     },
 }
 
-#[derive(Debug, TypeInfo)]
+#[derive(Debug, Clone, TypeInfo)]
 pub enum GenericBound {
     TraitBound {
         trait_: Path,
@@ -509,20 +535,20 @@ pub enum GenericBound {
     Outlives(String),
 }
 
-#[derive(Debug, TypeInfo)]
+#[derive(Debug, Clone, TypeInfo)]
 pub enum TraitBoundModifier {
     None,
     Maybe,
     MaybeConst,
 }
 
-#[derive(Debug, TypeInfo)]
+#[derive(Debug, Clone, TypeInfo)]
 pub enum Term {
     Type(Type),
     Constant(Constant),
 }
 
-#[derive(Debug, TypeInfo)]
+#[derive(Debug, Clone, TypeInfo)]
 pub enum Type {
     /// Structs, enums, and unions
     ResolvedPath(Path),
@@ -566,10 +592,15 @@ pub enum Type {
     },
 }
 
-#[derive(Debug, TypeInfo)]
+#[derive(Debug, Clone, TypeInfo)]
 pub struct Path {
+    /// Last segment of the path,
+    /// for example `Cow` in `std::borrow::Cow`
     pub name: String,
-    pub id: Identifiable,
+    /// Everything before the name,
+    /// for example `std::borrow` in `std::borrow::Cow`
+    pub prefix: String,
+    pub target: Identifiable,
     /// Generic arguments to the type
     /// ```test
     /// std::borrow::Cow<'static, str>
@@ -580,7 +611,7 @@ pub struct Path {
     pub args: Option<Box<GenericArgs>>,
 }
 
-#[derive(Debug, TypeInfo)]
+#[derive(Debug, Clone, TypeInfo)]
 pub struct FunctionPointer {
     pub decl: FnDecl,
     /// Used for Higher-Rank Trait Bounds (HRTBs)
@@ -594,7 +625,7 @@ pub struct FunctionPointer {
     pub header: Header,
 }
 
-#[derive(Debug, TypeInfo)]
+#[derive(Debug, Clone, TypeInfo)]
 pub struct FnDecl {
     /// List of argument names and their type.
     ///
@@ -605,13 +636,13 @@ pub struct FnDecl {
     pub c_variadic: bool,
 }
 
-#[derive(Debug, TypeInfo)]
+#[derive(Debug, Clone, TypeInfo)]
 pub struct FnInput {
-    pat: String,
-    ty: Type,
+    pub pat: String,
+    pub ty: Type,
 }
 
-#[derive(Debug, TypeInfo)]
+#[derive(Debug, Clone, TypeInfo)]
 pub struct Trait {
     pub is_auto: bool,
     pub is_unsafe: bool,
@@ -621,13 +652,13 @@ pub struct Trait {
     pub implementations: Vec<Identifiable>,
 }
 
-#[derive(Debug, TypeInfo)]
+#[derive(Debug, Clone, TypeInfo)]
 pub struct TraitAlias {
     pub generics: Generics,
     pub params: Vec<GenericBound>,
 }
 
-#[derive(Debug, TypeInfo)]
+#[derive(Debug, Clone, TypeInfo)]
 pub struct Impl {
     pub is_unsafe: bool,
     pub generics: Generics,
@@ -640,8 +671,9 @@ pub struct Impl {
     pub blanket_impl: Option<Type>,
 }
 
-#[derive(Debug, TypeInfo)]
+#[derive(Debug, Clone, TypeInfo)]
 pub struct Import {
+    pub meta: ItemMeta,
     /// The full path being imported.
     pub source: String,
     /// May be different from the last segment of `source` when renaming imports:
@@ -651,18 +683,18 @@ pub struct Import {
     /// ```rust
     /// pub use i32 as my_i32;
     /// ```
-    pub id: Option<Identifiable>,
+    pub target: Option<Identifiable>,
     /// Whether this import uses a glob: `use source::*;`
     pub glob: bool,
 }
 
-#[derive(Debug, TypeInfo)]
+#[derive(Debug, Clone, TypeInfo)]
 pub struct ProcMacro {
     pub kind: MacroKind,
     pub helpers: Vec<String>,
 }
 
-#[derive(Debug, TypeInfo)]
+#[derive(Debug, Clone, TypeInfo)]
 pub enum MacroKind {
     /// A bang macro `foo!()`.
     Bang,
@@ -672,26 +704,26 @@ pub enum MacroKind {
     Derive,
 }
 
-#[derive(Debug, TypeInfo)]
+#[derive(Debug, Clone, TypeInfo)]
 pub struct Typedef {
     pub type_: Type,
     pub generics: Generics,
 }
 
-#[derive(Debug, TypeInfo)]
+#[derive(Debug, Clone, TypeInfo)]
 pub struct OpaqueTy {
     pub bounds: Vec<GenericBound>,
     pub generics: Generics,
 }
 
-#[derive(Debug, TypeInfo)]
+#[derive(Debug, Clone, TypeInfo)]
 pub struct Static {
     pub type_: Type,
     pub mutable: bool,
     pub expr: String,
 }
 
-#[derive(Debug, TypeInfo)]
+#[derive(Debug, Clone, TypeInfo)]
 pub struct Primitive {
     pub name: String,
     pub impls: Vec<Identifiable>,

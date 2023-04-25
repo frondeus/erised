@@ -10,7 +10,7 @@ impl Builder {
             return Ok(cached.clone());
         }
 
-        if (id == self.root.crate_id) {
+        if id == self.root.crate_id {
             let krate = Arc::new(ExternalCrate {
                 name: self.root.name.clone().unwrap(),
                 html_root_url: None,
