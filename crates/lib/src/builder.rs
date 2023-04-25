@@ -1,4 +1,7 @@
-use std::{collections::HashMap, sync::Arc};
+use std::{
+    collections::HashMap,
+    sync::{Arc, Weak},
+};
 
 use crate::heap_types::*;
 use rustdoc_types::Id;
@@ -34,6 +37,7 @@ pub struct Builder {
 
 #[derive(Default)]
 pub(crate) struct Cache {
+    weak_items: HashMap<Id, Weak<Item>>,
     items: HashMap<Id, Arc<Item>>,
     summaries: HashMap<Id, Arc<ItemSummary>>,
     crates: HashMap<u32, Arc<ExternalCrate>>,
@@ -98,14 +102,19 @@ impl Builder {
 
     pub fn build(self) -> Result<Crate> {
         let mut cache = Default::default();
+        let root = (*self
+            .get_item(&mut cache, &self.source.root)?
+            .upgrade()
+            .expect("Module"))
+        .clone()
+        .as_module()
+        .expect("Module")
+        .into();
+
         Ok(Crate {
-            root: (*self.get_item(&mut cache, &self.source.root)?)
-                .clone()
-                .as_module()
-                .expect("Module")
-                .into(),
+            root,
             crate_version: self.source.crate_version,
-            all_items: vec![],
+            all_items: cache.items.into_iter().map(|(_k, v)| v).collect(),
             summaries: vec![],
             external_crates: vec![],
         })

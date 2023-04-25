@@ -1,6 +1,12 @@
-use std::{collections::HashMap, path::PathBuf, sync::Arc};
+use std::{
+    collections::HashMap,
+    path::PathBuf,
+    sync::{Arc, Weak},
+};
 
 use quote::quote;
+
+use crate::heap_types::Item;
 
 pub trait ToTokens {
     fn to_tokens(&self) -> proc_macro2::TokenStream;
@@ -40,6 +46,18 @@ impl<T: ToTokens> ToTokens for Arc<T> {
     fn to_tokens(&self) -> proc_macro2::TokenStream {
         let inner: &T = &*self;
         let inner = ToTokens::to_tokens(inner);
+        quote!(
+            || #inner
+        )
+    }
+}
+
+impl ToTokens for Weak<Item> {
+    fn to_tokens(&self) -> proc_macro2::TokenStream {
+        // let item_name = *self.
+        let inner: &Item = &*self.upgrade().unwrap();
+        let inner = inner.access();
+        // let inner = ToTokens::to_tokens(inner);
         quote!(
             || #inner
         )

@@ -35,9 +35,23 @@ impl Builder {
         Ok(match source {
             rustdoc_types::WherePredicate::BoundPredicate {
                 type_,
-                bounds,
-                generic_params,
-            } => todo!(),
+                bounds: source_bounds,
+                generic_params: source_generic_params,
+            } => {
+                let mut bounds = vec![];
+                for bound in source_bounds {
+                    bounds.push(self.build_generic_bound(cache, bound)?);
+                }
+                let mut generic_params = vec![];
+                for generic_param in source_generic_params {
+                    generic_params.push(self.build_generic_param_def(cache, generic_param)?);
+                }
+                WherePredicate::BoundPredicate {
+                    type_: self.build_type(cache, type_)?,
+                    bounds,
+                    generic_params,
+                }
+            }
             rustdoc_types::WherePredicate::RegionPredicate { lifetime, bounds } => todo!(),
             rustdoc_types::WherePredicate::EqPredicate { lhs, rhs } => todo!(),
         })

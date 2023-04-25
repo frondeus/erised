@@ -44,7 +44,22 @@ impl Builder {
                 }
                 Ok(GenericArgs::AngleBracketed { args, bindings })
             }
-            rustdoc_types::GenericArgs::Parenthesized { inputs, output } => todo!(),
+            rustdoc_types::GenericArgs::Parenthesized {
+                inputs: source_inputs,
+                output,
+            } => {
+                let mut inputs = vec![];
+                for input in source_inputs {
+                    inputs.push(self.build_type(cache, input)?);
+                }
+                Ok(GenericArgs::Parenthesized {
+                    inputs,
+                    output: match output.as_ref() {
+                        None => None,
+                        Some(o) => Some(self.build_type(cache, o)?),
+                    },
+                })
+            }
         }
     }
 
@@ -54,10 +69,10 @@ impl Builder {
         arg: &rustdoc_types::GenericArg,
     ) -> Result<GenericArg> {
         Ok(match arg {
-            rustdoc_types::GenericArg::Lifetime(_) => todo!(),
+            rustdoc_types::GenericArg::Lifetime(l) => GenericArg::Lifetime(l.clone()),
             rustdoc_types::GenericArg::Type(ty) => GenericArg::Type(self.build_type(cache, ty)?),
             rustdoc_types::GenericArg::Const(_) => todo!(),
-            rustdoc_types::GenericArg::Infer => todo!(),
+            rustdoc_types::GenericArg::Infer => GenericArg::Infer,
         })
     }
 

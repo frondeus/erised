@@ -1,6 +1,6 @@
-use std::sync::Arc;
+use std::sync::{Arc, Weak};
 
-use crate::heap_types::*;
+use crate::{heap_types::*, utils::ArcExt};
 use rustdoc_types::Id;
 
 use super::{Builder, Cache, Error, Result};
@@ -9,9 +9,15 @@ mod deprecation;
 mod spans;
 mod visibility;
 
+mod constants;
+mod enums;
 mod functions;
+mod impls;
 mod imports;
 mod modules;
+mod structs;
+mod traits;
+mod typedefs;
 
 impl Builder {
     pub(crate) fn build_item_meta(
@@ -29,11 +35,10 @@ impl Builder {
         })
     }
 
-    pub(crate) fn get_item(&self, cache: &mut Cache, id: &Id) -> Result<Arc<Item>> {
-        if let Some(cached) = cache.items.get(id) {
+    pub(crate) fn get_item(&self, cache: &mut Cache, id: &Id) -> Result<Weak<Item>> {
+        if let Some(cached) = cache.weak_items.get(id) {
             return Ok(cached.clone());
         }
-
         let item = self
             .source
             .index
@@ -42,12 +47,14 @@ impl Builder {
 
         let meta = self.build_item_meta(cache, item)?;
         let name = item.name.clone();
-        let item = self.build_item(cache, name, meta, &item.inner)?;
-        let item = Arc::new(item);
+        let item = Arc::create_cyclic(|weak| {
+            cache.weak_items.insert(id.clone(), weak.clone());
 
-        cache.items.insert(id.clone(), item.clone());
-
-        Ok(item)
+            self.build_item(cache, name, meta, &item.inner)
+        })?;
+        let weak = Arc::downgrade(&item);
+        cache.items.insert(id.clone(), item);
+        Ok(weak)
     }
 
     pub(crate) fn build_item(
@@ -66,19 +73,29 @@ impl Builder {
                 Ok(Item::Import(self.build_import(cache, meta, import)?))
             }
             rustdoc_types::ItemEnum::Union(_) => todo!(),
-            rustdoc_types::ItemEnum::Struct(_) => todo!(),
+            rustdoc_types::ItemEnum::Struct(strukt) => {
+                Ok(Item::Struct(self.build_struct(cache, name, meta, strukt)?))
+            }
             rustdoc_types::ItemEnum::StructField(_) => todo!(),
-            rustdoc_types::ItemEnum::Enum(_) => todo!(),
+            rustdoc_types::ItemEnum::Enum(enum_) => {
+                Ok(Item::Enum(self.build_enum(cache, name, meta, enum_)?))
+            }
             rustdoc_types::ItemEnum::Variant(_) => todo!(),
             rustdoc_types::ItemEnum::Function(func) => Ok(Item::Function(
                 self.build_function(cache, name, meta, func)?,
             )),
-            rustdoc_types::ItemEnum::Trait(_) => todo!(),
+            rustdoc_types::ItemEnum::Trait(trait_) => {
+                Ok(Item::Trait(self.build_trait(cache, name, meta, trait_)?))
+            }
             rustdoc_types::ItemEnum::TraitAlias(_) => todo!(),
-            rustdoc_types::ItemEnum::Impl(_) => todo!(),
-            rustdoc_types::ItemEnum::Typedef(_) => todo!(),
+            rustdoc_types::ItemEnum::Impl(i) => Ok(Item::Impl(self.build_impl(cache, meta, i)?)),
+            rustdoc_types::ItemEnum::Typedef(typedf) => Ok(Item::Typedef(
+                self.build_typedef(cache, name, meta, typedf)?,
+            )),
             rustdoc_types::ItemEnum::OpaqueTy(_) => todo!(),
-            rustdoc_types::ItemEnum::Constant(_) => todo!(),
+            rustdoc_types::ItemEnum::Constant(c) => Ok(Item::Constant(
+                self.build_constant_item(cache, name, meta, c)?,
+            )),
             rustdoc_types::ItemEnum::Static(_) => todo!(),
             rustdoc_types::ItemEnum::ForeignType => todo!(),
             rustdoc_types::ItemEnum::Macro(_) => todo!(),
@@ -87,9 +104,23 @@ impl Builder {
             rustdoc_types::ItemEnum::AssocConst { type_, default } => todo!(),
             rustdoc_types::ItemEnum::AssocType {
                 generics,
-                bounds,
+                bounds: source_bounds,
                 default,
-            } => todo!(),
+            } => {
+                let mut bounds = vec![];
+                for bound in source_bounds {
+                    bounds.push(self.build_generic_bound(cache, bound)?);
+                }
+                Ok(Item::AssocType {
+                    meta,
+                    generics: self.build_generics(cache, generics)?,
+                    bounds,
+                    default: match default.as_ref() {
+                        None => None,
+                        Some(def) => Some(self.build_type(cache, def)?),
+                    },
+                })
+            }
         }
     }
 

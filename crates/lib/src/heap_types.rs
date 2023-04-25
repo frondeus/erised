@@ -3,7 +3,7 @@ use erised_macros::TypeInfo;
 
 use std::collections::HashMap;
 use std::path::PathBuf;
-use std::sync::Arc;
+use std::sync::{Arc, Weak};
 
 /// rustdoc format-version.
 pub(crate) const FORMAT_VERSION: u32 = 24;
@@ -28,7 +28,7 @@ pub struct Crate {
 
 #[derive(Debug, Clone, TypeInfo)]
 pub enum Identifiable {
-    Item(Arc<Item>),
+    Item(Weak<Item>),
     Summary(Arc<ItemSummary>),
 }
 
@@ -182,6 +182,13 @@ pub enum GenericArg {
 }
 
 #[derive(Debug, Clone, TypeInfo)]
+pub struct ConstantItem {
+    pub name: String,
+    pub meta: ItemMeta,
+    pub constant: Constant,
+}
+
+#[derive(Debug, Clone, TypeInfo)]
 pub struct Constant {
     pub type_: Type,
     pub expr: String,
@@ -230,7 +237,7 @@ pub enum ItemKind {
     Keyword,
 }
 
-#[derive(Debug, Clone, TypeInfo)]
+#[derive(Debug, Clone, TypeInfo, Default)]
 pub enum Item {
     Module(Module),
     ExternCrate {
@@ -242,10 +249,9 @@ pub enum Item {
 
     Union(Union),
     Struct(Struct),
-    StructField(Type),
+    // StructField(StructField),
     Enum(Enum),
-    Variant(Variant),
-
+    // Variant(Variant),
     Function(Function),
 
     Trait(Trait),
@@ -254,11 +260,12 @@ pub enum Item {
 
     Typedef(Typedef),
     OpaqueTy(OpaqueTy),
-    Constant(Constant),
+    Constant(ConstantItem),
 
     Static(Static),
 
     /// `type`s from an extern block
+    #[default]
     ForeignType,
 
     /// Declarative macro_rules! macro
@@ -303,6 +310,8 @@ pub struct Union {
 
 #[derive(Debug, Clone, TypeInfo)]
 pub struct Struct {
+    pub name: String,
+    pub meta: ItemMeta,
     pub kind: StructKind,
     pub generics: Generics,
     pub impls: Vec<Identifiable>,
@@ -325,7 +334,7 @@ pub enum StructKind {
     ///
     /// All [`Id`]'s will point to [`ItemEnum::StructField`]. Private and
     /// `#[doc(hidden)]` fields will be given as `None`
-    Tuple(Vec<Option<Identifiable>>),
+    Tuple(Vec<Option<StructField>>),
     /// A struct with nammed fields.
     ///
     /// ```rust
@@ -333,16 +342,25 @@ pub enum StructKind {
     /// pub struct EmptyPlainStruct {}
     /// ```
     Plain {
-        fields: Vec<Identifiable>,
+        fields: Vec<StructField>,
         fields_stripped: bool,
     },
 }
 
 #[derive(Debug, Clone, TypeInfo)]
+pub struct StructField {
+    pub name: Option<String>,
+    pub meta: ItemMeta,
+    pub ty: Type,
+}
+
+#[derive(Debug, Clone, TypeInfo)]
 pub struct Enum {
+    pub name: String,
+    pub meta: ItemMeta,
     pub generics: Generics,
     pub variants_stripped: bool,
-    pub variants: Vec<Identifiable>,
+    pub variants: Vec<Variant>,
     pub impls: Vec<Identifiable>,
 }
 
@@ -376,7 +394,7 @@ pub enum VariantKind {
     ///     EmptyTupleVariant(),
     /// }
     /// ```
-    Tuple(Vec<Option<Identifiable>>),
+    Tuple(Vec<Option<StructField>>),
     /// A variant with named fields.
     ///
     /// ```rust
@@ -386,7 +404,7 @@ pub enum VariantKind {
     /// }
     /// ```
     Struct {
-        fields: Vec<Identifiable>,
+        fields: Vec<StructField>,
         fields_stripped: bool,
     },
 }
@@ -644,6 +662,8 @@ pub struct FnInput {
 
 #[derive(Debug, Clone, TypeInfo)]
 pub struct Trait {
+    pub name: String,
+    pub meta: ItemMeta,
     pub is_auto: bool,
     pub is_unsafe: bool,
     pub items: Vec<Identifiable>,
@@ -660,12 +680,13 @@ pub struct TraitAlias {
 
 #[derive(Debug, Clone, TypeInfo)]
 pub struct Impl {
+    pub meta: ItemMeta,
     pub is_unsafe: bool,
     pub generics: Generics,
     pub provided_trait_methods: Vec<String>,
     pub trait_: Option<Path>,
     pub for_: Type,
-    pub items: Vec<Identifiable>,
+    pub items: Vec<Weak<Item>>,
     pub negative: bool,
     pub synthetic: bool,
     pub blanket_impl: Option<Type>,
@@ -706,6 +727,8 @@ pub enum MacroKind {
 
 #[derive(Debug, Clone, TypeInfo)]
 pub struct Typedef {
+    pub name: String,
+    pub meta: ItemMeta,
     pub type_: Type,
     pub generics: Generics,
 }

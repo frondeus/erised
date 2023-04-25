@@ -11,12 +11,24 @@ impl Builder {
             rustdoc_types::Type::ResolvedPath(path) => {
                 Ok(Type::ResolvedPath(self.build_path(cache, path)?))
             }
-            rustdoc_types::Type::DynTrait(_) => todo!(),
-            rustdoc_types::Type::Generic(_) => todo!(),
-            rustdoc_types::Type::Primitive(_) => todo!(),
-            rustdoc_types::Type::FunctionPointer(_) => todo!(),
-            rustdoc_types::Type::Tuple(_) => todo!(),
-            rustdoc_types::Type::Slice(_) => todo!(),
+            rustdoc_types::Type::DynTrait(trait_) => {
+                Ok(Type::DynTrait(self.build_dyn_trait(cache, trait_)?))
+            }
+            rustdoc_types::Type::Generic(gen) => Ok(Type::Generic(gen.clone())),
+            rustdoc_types::Type::Primitive(primitive) => Ok(Type::Primitive(primitive.clone())),
+            rustdoc_types::Type::FunctionPointer(fp) => Ok(Type::FunctionPointer(Box::new(
+                self.build_function_pointer(cache, fp)?,
+            ))),
+            rustdoc_types::Type::Tuple(tuple) => {
+                let mut types = vec![];
+                for ty in tuple {
+                    types.push(self.build_type(cache, ty)?);
+                }
+                Ok(Type::Tuple(types))
+            }
+            rustdoc_types::Type::Slice(slice) => {
+                Ok(Type::Slice(Box::new(self.build_type(cache, &slice)?)))
+            }
             rustdoc_types::Type::Array { type_, len } => todo!(),
             rustdoc_types::Type::ImplTrait(generic_bounds) => {
                 let mut imp = vec![];
@@ -31,13 +43,22 @@ impl Builder {
                 lifetime,
                 mutable,
                 type_,
-            } => todo!(),
+            } => Ok(Type::BorrowedRef {
+                lifetime: lifetime.clone(),
+                mutable: *mutable,
+                type_: Box::new(self.build_type(cache, type_)?),
+            }),
             rustdoc_types::Type::QualifiedPath {
                 name,
                 args,
                 self_type,
                 trait_,
-            } => todo!(),
+            } => Ok(Type::QualifiedPath {
+                name: name.clone(),
+                args: Box::new(self.build_generic_args(cache, &args)?),
+                self_type: Box::new(self.build_type(cache, self_type)?),
+                trait_: self.build_path(cache, trait_)?,
+            }),
         }
     }
 
@@ -62,7 +83,7 @@ impl Builder {
                     modifier: self.build_trait_bound_modifier(cache, modifier)?,
                 }
             }
-            rustdoc_types::GenericBound::Outlives(_) => todo!(),
+            rustdoc_types::GenericBound::Outlives(s) => GenericBound::Outlives(s.clone()),
         })
     }
 
@@ -119,6 +140,53 @@ impl Builder {
                 }
             }
             rustdoc_types::GenericParamDefKind::Const { type_, default } => todo!(),
+        })
+    }
+
+    pub(crate) fn build_function_pointer(
+        &self,
+        cache: &mut Cache,
+        source: &rustdoc_types::FunctionPointer,
+    ) -> Result<FunctionPointer> {
+        let mut generic_params = vec![];
+        for param in &source.generic_params {
+            generic_params.push(self.build_generic_param_def(cache, param)?);
+        }
+
+        Ok(FunctionPointer {
+            decl: self.build_function_decl(cache, &source.decl)?,
+            generic_params,
+            header: self.build_header(cache, &source.header)?,
+        })
+    }
+
+    pub(crate) fn build_dyn_trait(
+        &self,
+        cache: &mut Cache,
+        source: &rustdoc_types::DynTrait,
+    ) -> Result<DynTrait> {
+        let mut traits = vec![];
+        for trait_ in &source.traits {
+            traits.push(self.build_poly_trait(cache, trait_)?);
+        }
+        Ok(DynTrait {
+            traits,
+            lifetime: source.lifetime.clone(),
+        })
+    }
+
+    pub(crate) fn build_poly_trait(
+        &self,
+        cache: &mut Cache,
+        source: &rustdoc_types::PolyTrait,
+    ) -> Result<PolyTrait> {
+        let mut generic_params = vec![];
+        for param in &source.generic_params {
+            generic_params.push(self.build_generic_param_def(cache, param)?);
+        }
+        Ok(PolyTrait {
+            trait_: self.build_path(cache, &source.trait_)?,
+            generic_params,
         })
     }
 }

@@ -48,7 +48,7 @@ impl TokenMatcher {
                         *cursor = next;
 
                         new.append(Group::new(Delimiter::Bracket, inner));
-                    } else if ident == "Box" || ident == "Arc" {
+                    } else if ident == "Box" || ident == "Arc" || ident == "Weak" {
                         new.append_all(quote!(fn () -> ));
 
                         let (_, mut next) = cursor.token_tree().expect("Expected < token");
@@ -90,7 +90,7 @@ impl TokenMatcher {
     }
 
     pub fn is_destruct(&self, stream: TokenStream) -> bool {
-        let idents = &["Option", "Vec", "PathBuf", "HashMap", "Arc"];
+        let idents = &["Option", "Vec", "PathBuf", "HashMap", "Arc", "Weak"];
 
         let buf = TokenBuffer::new2(stream);
         let cursor = buf.begin();
