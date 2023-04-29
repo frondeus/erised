@@ -1,7 +1,4 @@
-
-
 use crate::heap_types::*;
-
 
 use super::{Builder, Cache, Result};
 
@@ -52,7 +49,10 @@ impl Builder {
                     generic_params,
                 }
             }
-            rustdoc_types::WherePredicate::RegionPredicate { lifetime: _, bounds: _ } => todo!(),
+            rustdoc_types::WherePredicate::RegionPredicate {
+                lifetime: _,
+                bounds: _,
+            } => todo!(),
             rustdoc_types::WherePredicate::EqPredicate { lhs: _, rhs: _ } => todo!(),
         })
     }

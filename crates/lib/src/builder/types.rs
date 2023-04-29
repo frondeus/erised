@@ -35,7 +35,10 @@ impl Builder {
                 Ok(Type::ImplTrait(imp))
             }
             rustdoc_types::Type::Infer => todo!(),
-            rustdoc_types::Type::RawPointer { mutable: _, type_: _ } => todo!(),
+            rustdoc_types::Type::RawPointer {
+                mutable: _,
+                type_: _,
+            } => todo!(),
             rustdoc_types::Type::BorrowedRef {
                 lifetime,
                 mutable,
@@ -136,7 +139,10 @@ impl Builder {
                     synthetic: *synthetic,
                 }
             }
-            rustdoc_types::GenericParamDefKind::Const { type_: _, default: _ } => todo!(),
+            rustdoc_types::GenericParamDefKind::Const {
+                type_: _,
+                default: _,
+            } => todo!(),
         })
     }
 

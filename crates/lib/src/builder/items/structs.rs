@@ -1,5 +1,3 @@
-
-
 use crate::{builder::Error::CouldNotFind, heap_types::*};
 
 use super::{Builder, Cache, Result};

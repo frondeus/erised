@@ -1,5 +1,5 @@
 use std::{
-    collections::HashMap,
+    collections::{BTreeMap, HashMap},
     path::PathBuf,
     sync::{Arc, Weak},
 };
@@ -311,10 +311,13 @@ impl Builder {
         .expect("Module")
         .into();
 
+        let all_items: BTreeMap<String, Arc<Item>> =
+            cache.items.into_iter().map(|(k, v)| (k.0, v)).collect();
+
         Ok(Crate {
             root,
             crate_version: self.source.crate_version,
-            all_items: cache.items.into_values().collect(),
+            all_items: all_items.into_values().collect(),
             summaries: vec![],
             external_crates: vec![],
         })

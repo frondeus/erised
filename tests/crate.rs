@@ -18,7 +18,7 @@ fn erised() {
     dbg!(&krate);
     let info = krate.generate_static();
 
-    // let info = pretty_print(info).expect("formatted");
+    let info = pretty_print(info).expect("formatted");
 
     insta::assert_display_snapshot!(info);
 }
