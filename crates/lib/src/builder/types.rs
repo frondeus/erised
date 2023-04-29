@@ -26,7 +26,7 @@ impl Builder {
             rustdoc_types::Type::Slice(slice) => {
                 Ok(Type::Slice(Box::new(self.build_type(cache, slice)?)))
             }
-            rustdoc_types::Type::Array { type_, len } => todo!(),
+            rustdoc_types::Type::Array { type_: _, len: _ } => todo!(),
             rustdoc_types::Type::ImplTrait(generic_bounds) => {
                 let mut imp = vec![];
                 for bound in generic_bounds {
@@ -35,7 +35,7 @@ impl Builder {
                 Ok(Type::ImplTrait(imp))
             }
             rustdoc_types::Type::Infer => todo!(),
-            rustdoc_types::Type::RawPointer { mutable, type_ } => todo!(),
+            rustdoc_types::Type::RawPointer { mutable: _, type_: _ } => todo!(),
             rustdoc_types::Type::BorrowedRef {
                 lifetime,
                 mutable,
@@ -86,7 +86,7 @@ impl Builder {
 
     pub(crate) fn build_trait_bound_modifier(
         &self,
-        cache: &mut Cache,
+        _cache: &mut Cache,
         modifier: &rustdoc_types::TraitBoundModifier,
     ) -> Result<TraitBoundModifier> {
         Ok(match modifier {
@@ -136,7 +136,7 @@ impl Builder {
                     synthetic: *synthetic,
                 }
             }
-            rustdoc_types::GenericParamDefKind::Const { type_, default } => todo!(),
+            rustdoc_types::GenericParamDefKind::Const { type_: _, default: _ } => todo!(),
         })
     }
 

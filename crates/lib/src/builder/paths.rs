@@ -1,9 +1,9 @@
-use std::sync::Arc;
+
 
 use crate::heap_types::*;
-use rustdoc_types::Id;
 
-use super::{Builder, Cache, Error, Result};
+
+use super::{Builder, Cache, Result};
 
 impl Builder {
     pub(crate) fn build_path(&self, cache: &mut Cache, ty: &rustdoc_types::Path) -> Result<Path> {
@@ -114,7 +114,7 @@ impl Builder {
     ) -> Result<Term> {
         Ok(match source {
             rustdoc_types::Term::Type(ty) => Term::Type(self.build_type(cache, ty)?),
-            rustdoc_types::Term::Constant(c) => todo!(),
+            rustdoc_types::Term::Constant(_c) => todo!(),
         })
     }
 }

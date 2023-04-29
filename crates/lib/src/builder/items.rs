@@ -73,7 +73,7 @@ impl Builder {
             rustdoc_types::ItemEnum::Module(module) => {
                 Ok(Item::Module(self.build_module(cache, name, meta, module)?))
             }
-            rustdoc_types::ItemEnum::ExternCrate { name, rename } => todo!(),
+            rustdoc_types::ItemEnum::ExternCrate { name: _, rename: _ } => todo!(),
             rustdoc_types::ItemEnum::Import(import) => {
                 Ok(Item::Import(self.build_import(cache, meta, import)?))
             }
@@ -104,7 +104,7 @@ impl Builder {
             rustdoc_types::ItemEnum::Macro(_) => todo!(),
             rustdoc_types::ItemEnum::ProcMacro(_) => todo!(),
             rustdoc_types::ItemEnum::Primitive(_) => todo!(),
-            rustdoc_types::ItemEnum::AssocConst { type_, default } => todo!(),
+            rustdoc_types::ItemEnum::AssocConst { type_: _, default: _ } => todo!(),
             rustdoc_types::ItemEnum::AssocType {
                 generics,
                 bounds: source_bounds,

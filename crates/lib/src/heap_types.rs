@@ -1,7 +1,7 @@
 use crate as erised;
 use erised_macros::TypeInfo;
 
-use std::collections::HashMap;
+
 use std::path::PathBuf;
 use std::sync::{Arc, Weak};
 

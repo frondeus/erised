@@ -52,7 +52,7 @@ impl Builder {
 
     pub(crate) fn build_header(
         &self,
-        cache: &mut Cache,
+        _cache: &mut Cache,
         header: &rustdoc_types::Header,
     ) -> Result<Header> {
         Ok(Header {

@@ -93,7 +93,7 @@ impl Builder {
 
     pub(crate) fn build_discriminant(
         &self,
-        cache: &mut Cache,
+        _cache: &mut Cache,
         source: &rustdoc_types::Discriminant,
     ) -> Result<Discriminant> {
         Ok(Discriminant {

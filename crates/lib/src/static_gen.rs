@@ -17,7 +17,7 @@ impl ItemMeta {
 impl Crate {
     pub fn generate_static(&self) -> TokenStream {
         let name = &self.root.name;
-        let uppercase_name = format_ident!("{}", name.to_screaming_snake_case());
+        let _uppercase_name = format_ident!("{}", name.to_screaming_snake_case());
         let lowercase_name = format_ident!("{}", name.to_snake_case());
 
         let mut items = vec![];

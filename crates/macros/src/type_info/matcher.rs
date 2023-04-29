@@ -65,7 +65,7 @@ impl TokenMatcher {
                     } else if Self::UNTOUCHABLE.contains(&ident.to_string().as_str()) {
                         new.append(ident);
                     } else {
-                        let new_ident = Ident::new(&format!("Static{}", ident), ident.span());
+                        let new_ident = Ident::new(&format!("Static{ident}"), ident.span());
 
                         new.append(new_ident);
                     }
@@ -99,10 +99,7 @@ impl TokenMatcher {
             None => return false,
         };
         match tree {
-            TokenTree::Group(group) => match group.delimiter() {
-                Delimiter::Parenthesis => true,
-                _ => false,
-            },
+            TokenTree::Group(group) => matches!(group.delimiter(), Delimiter::Parenthesis),
             TokenTree::Ident(ident) => {
                 idents.contains(&ident.to_string().as_str())
                 // ident == "Option" || ident == "Vec",

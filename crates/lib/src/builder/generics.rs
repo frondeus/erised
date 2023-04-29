@@ -1,9 +1,9 @@
-use std::sync::Arc;
+
 
 use crate::heap_types::*;
-use rustdoc_types::Id;
 
-use super::{Builder, Cache, Error, Result};
+
+use super::{Builder, Cache, Result};
 
 impl Builder {
     pub(crate) fn build_generics(
@@ -52,8 +52,8 @@ impl Builder {
                     generic_params,
                 }
             }
-            rustdoc_types::WherePredicate::RegionPredicate { lifetime, bounds } => todo!(),
-            rustdoc_types::WherePredicate::EqPredicate { lhs, rhs } => todo!(),
+            rustdoc_types::WherePredicate::RegionPredicate { lifetime: _, bounds: _ } => todo!(),
+            rustdoc_types::WherePredicate::EqPredicate { lhs: _, rhs: _ } => todo!(),
         })
     }
 }
