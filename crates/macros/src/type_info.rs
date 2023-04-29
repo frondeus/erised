@@ -27,12 +27,17 @@ impl TypeInfo {
 
     fn gen_extra(&self) -> TokenStream2 {
         let ident = &self.ident;
+        let static_ident = self.static_ident();
         match &self.data {
             ast::Data::Enum(variants) => {
+                let static_variants = variants.iter().filter_map(|v| v.gen_as_static());
                 let variants = variants.iter().filter_map(|v| v.gen_as());
                 quote!(
                     impl #ident {
                         #(#variants)*
+                    }
+                    impl #static_ident {
+                        #(#static_variants)*
                     }
                 )
             }

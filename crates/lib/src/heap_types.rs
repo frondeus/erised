@@ -1,7 +1,6 @@
 use crate as erised;
 use erised_macros::TypeInfo;
 
-
 use std::path::PathBuf;
 use std::sync::{Arc, Weak};
 
@@ -52,7 +51,7 @@ pub struct ItemSummary {
     ///
     /// Note that items can appear in multiple paths, and the one chosen is implementation
     /// defined. Currently, this is the full path to where the item was defined. Eg
-    /// [`String`] is currently `["alloc", "string", "String"]` and [`HashMap`] is
+    /// [`String`] is currently `["alloc", "string", "String"]` and [`std::collections::HashMap`] is
     /// `["std", "collections", "hash", "map", "HashMap"]`, but this is subject to change.
     pub path: Vec<String>,
     /// Whether this item is a struct, trait, macro, etc.
@@ -333,8 +332,7 @@ pub enum StructKind {
     /// pub struct EmptyTupleStruct();
     /// ```
     ///
-    /// All [`Id`]'s will point to [`ItemEnum::StructField`]. Private and
-    /// `#[doc(hidden)]` fields will be given as `None`
+    /// Private and `#[doc(hidden)]` fields may give `None`
     Tuple(Vec<Option<StructField>>),
     /// A struct with nammed fields.
     ///

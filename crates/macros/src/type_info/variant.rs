@@ -73,6 +73,43 @@ impl TypeInfoVariant {
             )),
         }
     }
+    pub fn gen_as_static(&self) -> Option<TokenStream> {
+        let ident = &self.ident;
+        let style = &self.fields.style;
+
+        let as_ident = format_ident!("as_{}", ident.to_string().to_snake_case());
+        let fields = &self.fields;
+
+        match style {
+            ast::Style::Tuple => {
+                if fields.len() == 1 {
+                    let field = self.fields.fields.first().unwrap();
+                    let field_ty = field.gen();
+
+                    Some(quote!(
+                        pub fn #as_ident(self) -> Option<#field_ty> {
+                            match self {
+                                Self::#ident(i) => Some(i),
+                                _ => None
+                            }
+                        }
+                    ))
+                } else {
+                    None
+                }
+            }
+            ast::Style::Struct => None,
+            ast::Style::Unit => Some(quote!(
+
+                pub fn #as_ident(self) -> Option<()> {
+                    match self {
+                        Self::#ident => Some(()),
+                        _ => None
+                    }
+                }
+            )),
+        }
+    }
 
     pub fn gen(&self) -> TokenStream {
         let ident = &self.ident;

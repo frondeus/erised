@@ -104,7 +104,11 @@ impl Builder {
             rustdoc_types::ItemEnum::Macro(_) => todo!(),
             rustdoc_types::ItemEnum::ProcMacro(_) => todo!(),
             rustdoc_types::ItemEnum::Primitive(_) => todo!(),
-            rustdoc_types::ItemEnum::AssocConst { type_: _, default: _ } => todo!(),
+            rustdoc_types::ItemEnum::AssocConst { type_, default } => Ok(Item::AssocConst {
+                meta,
+                type_: self.build_type(cache, type_)?,
+                default: default.clone(),
+            }),
             rustdoc_types::ItemEnum::AssocType {
                 generics,
                 bounds: source_bounds,
