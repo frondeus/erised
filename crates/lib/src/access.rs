@@ -27,13 +27,13 @@ impl Item {
             Item::Struct(strukt) => {
                 let path = strukt.meta.get_formatted_path();
                 quote!(
-                    <::#(#path)::* as Reflect>::TYPE_INFO
+                    <#path as Reflect>::TYPE_INFO
                 )
             }
             Item::Enum(enum_) => {
                 let path = enum_.meta.get_formatted_path();
                 quote!(
-                    <::#(#path)::* as Reflect>::TYPE_INFO
+                    <#path as Reflect>::TYPE_INFO
                 )
             }
         }

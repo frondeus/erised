@@ -67,6 +67,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(dead_code)]
     fn unit_enum_info() {
         #[derive(TypeInfo)]
         pub enum TypeInfo {
@@ -121,11 +122,13 @@ mod experiments {
 
     use std::sync::Arc;
 
+    #[allow(dead_code)]
     struct Foo {
         i: Vec<Arc<String>>,
         bar: Bar,
     }
 
+    #[allow(dead_code)]
     struct StaticFoo {
         i: &'static [fn() -> &'static str],
         bar: StaticBar,
@@ -155,6 +158,7 @@ mod experiments {
         a: String,
     }
 
+    #[allow(dead_code)]
     struct StaticBar {
         a: &'static str,
     }

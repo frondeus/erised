@@ -1,13 +1,12 @@
 use std::{
     collections::HashMap,
+    path::PathBuf,
     sync::{Arc, Weak},
 };
 
 use crate::heap_types::*;
 use rustdoc_types::Id;
 use thiserror::Error;
-
-pub use rustdoc_json::PackageTarget;
 
 #[derive(Debug, Error)]
 pub enum Error {
@@ -36,6 +35,13 @@ pub struct Builder {
     source: rustdoc_types::Crate,
     // reflect_id: rustdoc_types::Id,
     root: rustdoc_types::Item,
+    crate_replacement: Option<CrateReplacement>,
+}
+
+#[derive(Clone)]
+pub enum CrateReplacement {
+    Root,
+    OtherByName(String),
 }
 
 #[derive(Default)]
@@ -52,20 +58,221 @@ mod items;
 mod paths;
 mod types;
 
-impl Builder {
-    pub fn load(
-        manifest_dir: impl AsRef<std::path::Path>,
-        options: impl Fn(rustdoc_json::Builder) -> rustdoc_json::Builder,
-    ) -> Result<Option<Crate>> {
-        let manifest_dir = manifest_dir.as_ref();
+pub struct BuilderOpts {
+    manifest_path: PathBuf,
+    target_dir: Option<PathBuf>,
+    target: Option<String>,
+    quiet: bool,
+    silent: bool,
+    no_default_features: bool,
+    all_features: bool,
+    features: Vec<String>,
+    package: Option<String>,
+    package_target: PackageTarget,
+    document_private_items: bool,
+    cap_lints: Option<String>,
+    crate_replacement: Option<CrateReplacement>,
+}
 
-        let builder = rustdoc_json::Builder::default()
+#[derive(Default, Debug, Clone)]
+pub enum PackageTarget {
+    #[default]
+    Lib,
+    Bin(String),
+    Example(String),
+    Test(String),
+    Bench(String),
+}
+
+impl From<PackageTarget> for rustdoc_json::PackageTarget {
+    fn from(value: PackageTarget) -> Self {
+        match value {
+            PackageTarget::Lib => Self::Lib,
+            PackageTarget::Bin(b) => Self::Bin(b),
+            PackageTarget::Example(e) => Self::Example(e),
+            PackageTarget::Test(t) => Self::Test(t),
+            PackageTarget::Bench(b) => Self::Bench(b),
+        }
+    }
+}
+
+impl Default for BuilderOpts {
+    fn default() -> Self {
+        Self {
+            manifest_path: "Cargo.toml".into(),
+            target_dir: None,
+            target: None,
+            quiet: false,
+            silent: false,
+            no_default_features: false,
+            all_features: false,
+            features: vec![],
+            package: None,
+            package_target: PackageTarget::default(),
+            document_private_items: false,
+            cap_lints: Some("warn".to_owned()),
+            crate_replacement: None,
+        }
+    }
+}
+
+impl From<BuilderOpts> for rustdoc_json::Builder {
+    fn from(
+        BuilderOpts {
+            manifest_path,
+            target_dir,
+            target,
+            quiet,
+            silent,
+            no_default_features,
+            all_features,
+            features,
+            package,
+            package_target,
+            document_private_items,
+            cap_lints,
+            crate_replacement: _,
+        }: BuilderOpts,
+    ) -> Self {
+        let mut builder = rustdoc_json::Builder::default()
             .toolchain("nightly")
-            .manifest_path(manifest_dir.join("Cargo.toml"))
-            .target_dir(manifest_dir.join("erised_target"))
-            .document_private_items(true);
+            .manifest_path(manifest_path)
+            .quiet(quiet)
+            .silent(silent)
+            .no_default_features(no_default_features)
+            .all_features(all_features)
+            .features(features)
+            .document_private_items(document_private_items)
+            .cap_lints(cap_lints)
+            .package_target(package_target.into());
 
-        let json_path = options(builder).build()?;
+        if let Some(target_dir) = target_dir {
+            builder = builder.target_dir(target_dir);
+        }
+        if let Some(target) = target {
+            builder = builder.target(target);
+        }
+        if let Some(package) = package {
+            builder = builder.package(package);
+        }
+
+        builder
+    }
+}
+
+impl BuilderOpts {
+    pub fn manifest_dir(mut self, dir: impl AsRef<std::path::Path>) -> Self {
+        let dir = dir.as_ref();
+        self.manifest_path = dir.join("Cargo.toml");
+        self.target_dir = Some(dir.join("erised_target"));
+        self
+    }
+
+    pub fn replace_with_crate(mut self, replace: CrateReplacement) -> Self {
+        self.crate_replacement = Some(replace);
+        self
+    }
+
+    /// Set the relative or absolute path to `Cargo.toml`. Default: `Cargo.toml`
+    #[must_use]
+    pub fn manifest_path(mut self, manifest_path: impl AsRef<std::path::Path>) -> Self {
+        self.manifest_path = manifest_path.as_ref().to_owned();
+        self
+    }
+
+    /// Set what `--target-dir` to pass to `cargo`. Typically only needed if you
+    /// want to be able to build rustdoc JSON for the same crate concurrently,
+    /// for example to parallelize regression tests.
+    #[must_use]
+    pub fn target_dir(mut self, target_dir: impl AsRef<std::path::Path>) -> Self {
+        self.target_dir = Some(target_dir.as_ref().to_owned());
+        self
+    }
+
+    /// Clear a target dir previously set with [`Self::target_dir`].
+    #[must_use]
+    pub fn clear_target_dir(mut self) -> Self {
+        self.target_dir = None;
+        self
+    }
+
+    /// Whether or not to pass `--quiet` to `cargo rustdoc`. Default: `false`
+    #[must_use]
+    pub const fn quiet(mut self, quiet: bool) -> Self {
+        self.quiet = quiet;
+        self
+    }
+
+    /// Whether or not to redirect stdout and stderr to /dev/null. Default: `false`
+    #[must_use]
+    pub const fn silent(mut self, silent: bool) -> Self {
+        self.silent = silent;
+        self
+    }
+
+    /// Whether or not to pass `--target` to `cargo rustdoc`. Default: `None`
+    #[must_use]
+    pub fn target(mut self, target: String) -> Self {
+        self.target = Some(target);
+        self
+    }
+
+    /// Whether to pass `--no-default-features` to `cargo rustdoc`. Default: `false`
+    #[must_use]
+    pub const fn no_default_features(mut self, no_default_features: bool) -> Self {
+        self.no_default_features = no_default_features;
+        self
+    }
+
+    /// Whether to pass `--all-features` to `cargo rustdoc`. Default: `false`
+    #[must_use]
+    pub const fn all_features(mut self, all_features: bool) -> Self {
+        self.all_features = all_features;
+        self
+    }
+
+    /// Features to pass to `cargo rustdoc` via `--features`. Default to an empty vector
+    #[must_use]
+    pub fn features<I: IntoIterator<Item = S>, S: AsRef<str>>(mut self, features: I) -> Self {
+        self.features = features
+            .into_iter()
+            .map(|item| item.as_ref().to_owned())
+            .collect();
+        self
+    }
+
+    /// Package to use for `cargo rustdoc` via `-p`. Default: `None`
+    #[must_use]
+    pub fn package(mut self, package: impl AsRef<str>) -> Self {
+        self.package = Some(package.as_ref().to_owned());
+        self
+    }
+
+    /// What part of the package to document. Default: `PackageTarget::Lib`
+    #[must_use]
+    pub fn package_target(mut self, package_target: PackageTarget) -> Self {
+        self.package_target = package_target;
+        self
+    }
+
+    /// Whether to pass `--document-private-items` to `cargo rustdoc`. Default: `false`
+    #[must_use]
+    pub fn document_private_items(mut self, document_private_items: bool) -> Self {
+        self.document_private_items = document_private_items;
+        self
+    }
+
+    /// What to pass as `--cap-lints` to rustdoc JSON build command
+    #[must_use]
+    pub fn cap_lints(mut self, cap_lints: Option<impl AsRef<str>>) -> Self {
+        self.cap_lints = cap_lints.map(|c| c.as_ref().to_owned());
+        self
+    }
+
+    pub fn load(self) -> Result<Builder> {
+        let crate_replacement = self.crate_replacement.clone();
+        let builder: rustdoc_json::Builder = self.into();
+        let json_path = builder.build()?;
         let file = std::fs::OpenOptions::new().read(true).open(json_path)?;
 
         let source: rustdoc_types::Crate = serde_json::from_reader(file)?;
@@ -76,24 +283,6 @@ impl Builder {
             });
         }
 
-        // let reflect_id = source
-        //     .paths
-        //     .iter()
-        //     .find(|(_path, val)| val.path == &["erised", "ToReflect"])
-        //     .map(|(p, _)| p)
-        //     .cloned();
-
-        // let reflect_id = match reflect_id {
-        //     Some(id) => id,
-        //     None => {
-        //         eprintln!(
-        //             "cargo-warning=Reflection crate did not find a single usage of erised::ToReflect"
-        //         );
-        //         eprintln!("cargo-warning=It tried to load {json_path:?}");
-        //         return Ok(None);
-        //     }
-        // };
-
         let root = source
             .index
             .get(&source.root)
@@ -102,13 +291,15 @@ impl Builder {
 
         let builder = Builder {
             source,
-            // reflect_id,
             root,
+            crate_replacement,
         };
 
-        builder.build().map(Some)
+        Ok(builder)
     }
+}
 
+impl Builder {
     pub fn build(self) -> Result<Crate> {
         let mut cache = Default::default();
         let root = (*self

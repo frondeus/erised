@@ -1,17 +1,25 @@
 use inflector::Inflector;
-use proc_macro2::{Ident, TokenStream};
+use proc_macro2::TokenStream;
 use quote::format_ident;
 
 use crate::heap_types::{Crate, ItemMeta};
 
 impl ItemMeta {
-    pub(crate) fn get_formatted_path(&self) -> impl Iterator<Item = Ident> + '_ {
-        self.summary
-            .as_ref()
-            .unwrap()
+    pub(crate) fn get_formatted_path(&self) -> TokenStream {
+        let summary = self.summary.as_ref().unwrap();
+        let first: Option<&str> = summary.path.first().map(|t| t.as_str());
+        let is_crate = first.unwrap_or_default() == "crate";
+
+        let paths = summary
             .path
             .iter()
-            .map(|segment| format_ident!("{}", segment))
+            .map(|segment| format_ident!("{}", segment));
+
+        if is_crate {
+            quote::quote!(#(#paths)::*)
+        } else {
+            quote::quote!(::#(#paths)::*)
+        }
     }
 }
 impl Crate {
@@ -47,7 +55,7 @@ impl Crate {
                     // let uppercase_name = format_ident!("{}", enum_.name.to_screaming_snake_case());
                     let path = enum_.meta.get_formatted_path();
                     items.push(quote::quote!(
-                        impl Reflect for ::#(#path)::* {
+                        impl Reflect for #path {
                             const TYPE_INFO: erised::types::Item = #item;
                         }
                     ));
@@ -56,7 +64,7 @@ impl Crate {
                     // let uppercase_name = format_ident!("{}", strukt.name.to_screaming_snake_case());
                     let path = strukt.meta.get_formatted_path();
                     items.push(quote::quote!(
-                        impl Reflect for ::#(#path)::* {
+                        impl Reflect for #path {
                             const TYPE_INFO: erised::types::Item = #item;
                         }
                     ));

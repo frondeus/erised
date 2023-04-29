@@ -152,6 +152,23 @@ impl Builder {
         Ok(item)
     }
 
+    pub(crate) fn build_item_path(&self, source: &[String], crate_id: u32) -> Vec<String> {
+        let mut new = source.to_vec();
+        let first = match new.first_mut() {
+            None => return new,
+            Some(first) => first,
+        };
+        let change_name = match self.crate_replacement.as_ref() {
+            Some(super::CrateReplacement::Root) if crate_id == 0 => true,
+            Some(super::CrateReplacement::OtherByName(name)) => first == name,
+            _ => false,
+        };
+        if change_name {
+            *first = "crate".to_owned();
+        }
+        new
+    }
+
     pub(crate) fn build_item_summary(
         &self,
         cache: &mut Cache,
@@ -159,7 +176,7 @@ impl Builder {
     ) -> Result<ItemSummary> {
         Ok(ItemSummary {
             krate: self.get_crate(cache, item.crate_id)?,
-            path: item.path.clone(),
+            path: self.build_item_path(&item.path, item.crate_id),
             kind: match item.kind {
                 rustdoc_types::ItemKind::Module => ItemKind::Module,
                 rustdoc_types::ItemKind::ExternCrate => ItemKind::ExternCrate,
