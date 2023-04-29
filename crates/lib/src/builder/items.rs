@@ -25,6 +25,10 @@ impl Builder {
         cache: &mut Cache,
         item: &rustdoc_types::Item,
     ) -> Result<ItemMeta> {
+        let summary = self
+            .get_item_summary(cache, &item.id)
+            .ok()
+            .map(|i| ItemSummary::clone(&i));
         Ok(ItemMeta {
             krate: self.get_crate(cache, item.crate_id)?,
             span: self.build_span(cache, item.span.as_ref())?,
@@ -32,6 +36,7 @@ impl Builder {
             docs: item.docs.clone(),
             attrs: item.attrs.clone(),
             deprecation: self.build_deprecation(cache, item.deprecation.as_ref())?,
+            summary,
         })
     }
 
@@ -76,11 +81,9 @@ impl Builder {
             rustdoc_types::ItemEnum::Struct(strukt) => {
                 Ok(Item::Struct(self.build_struct(cache, name, meta, strukt)?))
             }
-            rustdoc_types::ItemEnum::StructField(_) => todo!(),
             rustdoc_types::ItemEnum::Enum(enum_) => {
                 Ok(Item::Enum(self.build_enum(cache, name, meta, enum_)?))
             }
-            rustdoc_types::ItemEnum::Variant(_) => todo!(),
             rustdoc_types::ItemEnum::Function(func) => Ok(Item::Function(
                 self.build_function(cache, name, meta, func)?,
             )),
@@ -121,6 +124,8 @@ impl Builder {
                     },
                 })
             }
+            rustdoc_types::ItemEnum::StructField(_) => unreachable!(),
+            rustdoc_types::ItemEnum::Variant(_) => unreachable!(),
         }
     }
 

@@ -40,7 +40,7 @@ impl TypeInfoVariant {
         let ident = &self.ident;
         let style = &self.fields.style;
 
-        let as_ident = format_ident!("as_{}", ident.to_string().to_camel_case());
+        let as_ident = format_ident!("as_{}", ident.to_string().to_snake_case());
         let fields = &self.fields;
 
         match style {

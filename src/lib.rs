@@ -53,3 +53,20 @@ pub fn pretty_print(tokens: impl ToTokens) -> Result<String, Error> {
 
     Ok(stdout.into())
 }
+
+pub struct MyStruct {
+    name: String,
+    en: MyEnum,
+}
+
+pub enum MyEnum {
+    Unit,
+}
+
+mod reflection;
+
+#[test]
+fn struct_info() {
+    use reflection::Reflect;
+    let typeinfo = MyStruct::TYPE_INFO.as_struct().expect("Struct");
+}

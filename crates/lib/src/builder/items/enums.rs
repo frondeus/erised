@@ -41,6 +41,8 @@ impl Builder {
                     t => panic!("Expected variant, found {t:?}"),
                 };
                 Ok(Variant {
+                    name: item.name.clone().unwrap(),
+                    meta: self.build_item_meta(cache, item)?,
                     kind: self.build_enum_variant_kind(cache, &variant.kind)?,
                     discriminant: match variant.discriminant.as_ref() {
                         Some(d) => Some(self.build_discriminant(cache, d)?),

@@ -64,6 +64,7 @@ pub struct ItemMeta {
     /// This can be used as a key to the `external_crates` map of [`Crate`] to see which crate
     /// this item came from.
     pub krate: Arc<ExternalCrate>,
+    pub summary: Option<ItemSummary>,
     /// The source location of this item (absent if it came from a macro expansion or inline
     /// assembly).
     pub span: Option<Span>,
@@ -209,7 +210,7 @@ pub enum TypeBindingKind {
     Constraint(Vec<GenericBound>),
 }
 
-#[derive(Debug, Clone, TypeInfo)]
+#[derive(Debug, Clone, TypeInfo, Copy)]
 pub enum ItemKind {
     Module,
     ExternCrate,
@@ -366,6 +367,8 @@ pub struct Enum {
 
 #[derive(Debug, Clone, TypeInfo)]
 pub struct Variant {
+    pub name: String,
+    pub meta: ItemMeta,
     /// Whether the variant is plain, a tuple-like, or struct-like. Contains the fields.
     pub kind: VariantKind,
     /// The discriminant, if explicitly specified.
