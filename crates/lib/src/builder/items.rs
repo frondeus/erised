@@ -140,7 +140,7 @@ impl Builder {
             .get(id)
             .ok_or_else(|| Error::CouldNotFind(id.clone()))?;
 
-        let item = self.build_item_summary(cache, &item)?;
+        let item = self.build_item_summary(cache, item)?;
         let item = Arc::new(item);
 
         cache.summaries.insert(id.clone(), item.clone());

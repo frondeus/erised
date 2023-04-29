@@ -44,7 +44,7 @@ impl<T: ToTokens> ToTokens for Option<T> {
 
 impl<T: ToTokens> ToTokens for Arc<T> {
     fn to_tokens(&self) -> proc_macro2::TokenStream {
-        let inner: &T = &*self;
+        let inner: &T = self;
         let inner = ToTokens::to_tokens(inner);
         quote!(
             || #inner
@@ -55,7 +55,7 @@ impl<T: ToTokens> ToTokens for Arc<T> {
 impl ToTokens for Weak<Item> {
     fn to_tokens(&self) -> proc_macro2::TokenStream {
         // let item_name = *self.
-        let inner: &Item = &*self.upgrade().unwrap();
+        let inner: &Item = &self.upgrade().unwrap();
         let inner = inner.access();
         // let inner = ToTokens::to_tokens(inner);
         quote!(
@@ -66,7 +66,7 @@ impl ToTokens for Weak<Item> {
 
 impl<T: ToTokens> ToTokens for Box<T> {
     fn to_tokens(&self) -> proc_macro2::TokenStream {
-        let inner: &T = &*self;
+        let inner: &T = self;
         let inner = ToTokens::to_tokens(inner);
         quote!(
             || #inner

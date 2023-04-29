@@ -55,8 +55,8 @@ pub fn pretty_print(tokens: impl ToTokens) -> Result<String, Error> {
 }
 
 pub struct MyStruct {
-    name: String,
-    en: MyEnum,
+    pub name: String,
+    pub en: MyEnum,
 }
 
 pub enum MyEnum {

@@ -14,8 +14,8 @@ impl Builder {
 
         Ok(Some(Span {
             filename: span.filename.clone(),
-            begin: span.begin.clone(),
-            end: span.end.clone(),
+            begin: span.begin,
+            end: span.end,
         }))
     }
 }

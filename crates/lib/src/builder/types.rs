@@ -1,9 +1,6 @@
-use std::sync::Arc;
-
 use crate::heap_types::*;
-use rustdoc_types::Id;
 
-use super::{Builder, Cache, Error, Result};
+use super::{Builder, Cache, Result};
 
 impl Builder {
     pub(crate) fn build_type(&self, cache: &mut Cache, ty: &rustdoc_types::Type) -> Result<Type> {
@@ -27,7 +24,7 @@ impl Builder {
                 Ok(Type::Tuple(types))
             }
             rustdoc_types::Type::Slice(slice) => {
-                Ok(Type::Slice(Box::new(self.build_type(cache, &slice)?)))
+                Ok(Type::Slice(Box::new(self.build_type(cache, slice)?)))
             }
             rustdoc_types::Type::Array { type_, len } => todo!(),
             rustdoc_types::Type::ImplTrait(generic_bounds) => {
@@ -55,7 +52,7 @@ impl Builder {
                 trait_,
             } => Ok(Type::QualifiedPath {
                 name: name.clone(),
-                args: Box::new(self.build_generic_args(cache, &args)?),
+                args: Box::new(self.build_generic_args(cache, args)?),
                 self_type: Box::new(self.build_type(cache, self_type)?),
                 trait_: self.build_path(cache, trait_)?,
             }),

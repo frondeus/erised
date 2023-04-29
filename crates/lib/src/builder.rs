@@ -11,6 +11,9 @@ pub use rustdoc_json::PackageTarget;
 
 #[derive(Debug, Error)]
 pub enum Error {
+    #[error("Expected JSON doc in version {expected} but found {found}")]
+    VersionMismatch { expected: u32, found: u32 },
+
     #[error(transparent)]
     BuildError(#[from] rustdoc_json::BuildError),
 
@@ -63,9 +66,15 @@ impl Builder {
             .document_private_items(true);
 
         let json_path = options(builder).build()?;
-        let file = std::fs::OpenOptions::new().read(true).open(&json_path)?;
+        let file = std::fs::OpenOptions::new().read(true).open(json_path)?;
 
         let source: rustdoc_types::Crate = serde_json::from_reader(file)?;
+        if source.format_version != FORMAT_VERSION {
+            return Err(Error::VersionMismatch {
+                expected: FORMAT_VERSION,
+                found: source.format_version,
+            });
+        }
 
         // let reflect_id = source
         //     .paths
@@ -114,7 +123,7 @@ impl Builder {
         Ok(Crate {
             root,
             crate_version: self.source.crate_version,
-            all_items: cache.items.into_iter().map(|(_k, v)| v).collect(),
+            all_items: cache.items.into_values().collect(),
             summaries: vec![],
             external_crates: vec![],
         })

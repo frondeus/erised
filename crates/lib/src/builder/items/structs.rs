@@ -77,7 +77,7 @@ impl Builder {
                 Ok(StructField {
                     name: item.name.clone(),
                     meta: self.build_item_meta(cache, item)?,
-                    ty: self.build_type(cache, &ty)?,
+                    ty: self.build_type(cache, ty)?,
                 })
             }
             None => Err(CouldNotFind(source.clone())),

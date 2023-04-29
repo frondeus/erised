@@ -6,12 +6,14 @@ use quote::format_ident;
 use quote::quote;
 use syn::Ident;
 use syn::Type;
+use syn::Visibility;
 
 use crate::type_info::matcher::TokenMatcher;
 
 #[derive(Debug, FromField)]
 #[darling(attributes(type_info))]
 pub struct TypeInfoField {
+    vis: Visibility,
     ident: Option<Ident>,
     pub(crate) ty: Type,
 }
@@ -54,13 +56,14 @@ impl TypeInfoField {
     pub fn gen(&self) -> TokenStream2 {
         let ident = self.ident_quote();
         let ty = self.ty_quote();
+        let vis = &self.vis;
 
         let ty = TokenMatcher.gen(ty);
         // if let Some(alias) = self.alias.as_ref() {
         //     return quote!(#ident #alias);
         // };
 
-        quote!(#ident #ty)
+        quote!(#vis #ident #ty)
     }
 
     pub fn gen_to_tokens(&self, idx: usize) -> TokenStream2 {

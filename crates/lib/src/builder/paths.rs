@@ -19,7 +19,7 @@ impl Builder {
             target: self.get_identifiable(cache, &ty.id)?,
             args: match ty.args.as_ref() {
                 None => None,
-                Some(args) => Some(Box::new(self.build_generic_args(cache, &args)?)),
+                Some(args) => Some(Box::new(self.build_generic_args(cache, args)?)),
             },
         })
     }
@@ -95,7 +95,7 @@ impl Builder {
     ) -> Result<TypeBindingKind> {
         Ok(match source {
             rustdoc_types::TypeBindingKind::Equality(term) => {
-                TypeBindingKind::Equality(self.build_term(cache, &term)?)
+                TypeBindingKind::Equality(self.build_term(cache, term)?)
             }
             rustdoc_types::TypeBindingKind::Constraint(generic_bounds) => {
                 let mut bounds = vec![];

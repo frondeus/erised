@@ -40,7 +40,7 @@ pub mod build {
             .open(target)
             .expect("Could not open target file");
 
-        write!(&mut file, "{}", info.to_string()).expect("Could not write to target file");
+        write!(&mut file, "{info}").expect("Could not write to target file");
 
         file.flush().expect("Could not flush the target file");
     }

@@ -3,7 +3,7 @@ pub trait Reflect {
 }
 pub mod erised_tests {
     use super::*;
-    impl Reflect for ::erised_tests::MyStruct {
+    impl Reflect for crate::MyStruct {
         const TYPE_INFO: erised::types::Item = erised::types::Item::Struct(erised::types::Struct {
             name: "MyStruct",
             meta: erised::types::ItemMeta {
@@ -90,7 +90,7 @@ pub mod erised_tests {
                             name: "MyEnum",
                             prefix: "",
                             target: erised::types::Identifiable::Item(|| {
-                                <::erised_tests::MyEnum as Reflect>::TYPE_INFO
+                                <crate::MyEnum as Reflect>::TYPE_INFO
                             }),
                             args: Some(|| erised::types::GenericArgs::AngleBracketed {
                                 args: &[],
@@ -121,7 +121,7 @@ pub mod erised_tests {
             ],
         });
     }
-    impl Reflect for ::erised_tests::MyEnum {
+    impl Reflect for crate::MyEnum {
         const TYPE_INFO: erised::types::Item = erised::types::Item::Enum(erised::types::Enum {
             name: "MyEnum",
             meta: erised::types::ItemMeta {
