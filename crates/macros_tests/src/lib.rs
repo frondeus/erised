@@ -116,68 +116,25 @@ mod tests {
 
         insta::assert_display_snapshot!(static_info);
     }
-}
 
-mod experiments {
+    #[test]
+    fn struct_enum_destruct_field() {
+        use erised::heap_types::StaticType;
+        use erised::heap_types::Type;
 
-    use std::sync::Arc;
-
-    #[allow(dead_code)]
-    struct Foo {
-        i: Vec<Arc<String>>,
-        bar: Bar,
-    }
-
-    #[allow(dead_code)]
-    struct StaticFoo {
-        i: &'static [fn() -> &'static str],
-        bar: StaticBar,
-    }
-
-    impl erised::destruct::ToTokens for Foo {
-        fn to_tokens(&self) -> proc_macro2::TokenStream {
-            let &Self { i, bar } = &self;
-
-            let (i, bar) = (
-                erised::destruct::ToTokens::to_tokens(i),
-                erised::destruct::ToTokens::to_tokens(bar),
-            );
-
-            quote::quote!(StaticFoo { i: #i, bar: #bar })
+        #[derive(TypeInfo)]
+        pub enum TypeInfo {
+            Map { foo: Box<Type> },
         }
-    }
-    impl quote::ToTokens for Foo {
-        fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-            use quote::TokenStreamExt;
 
-            tokens.append_all(erised::destruct::ToTokens::to_tokens(self));
-        }
-    }
+        let dyn_info = TypeInfo::Map {
+            foo: Box::new(Type::Infer),
+        };
 
-    struct Bar {
-        a: String,
-    }
+        let static_info = quote::quote!(
+          #dyn_info
+        );
 
-    #[allow(dead_code)]
-    struct StaticBar {
-        a: &'static str,
-    }
-
-    impl erised::destruct::ToTokens for Bar {
-        fn to_tokens(&self) -> proc_macro2::TokenStream {
-            let &Self { a } = &self;
-
-            let a = erised::destruct::ToTokens::to_tokens(a);
-
-            // tokens.append_all(quote::quote!(StaticFoo { i: &[|| "Foo"] }));
-            quote::quote!(StaticBar { a: #a })
-        }
-    }
-    impl quote::ToTokens for Bar {
-        fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-            use quote::TokenStreamExt;
-
-            tokens.append_all(erised::destruct::ToTokens::to_tokens(self));
-        }
+        insta::assert_display_snapshot!(static_info);
     }
 }

@@ -6,11 +6,13 @@ use std::{
 
 use quote::quote;
 
-use crate::heap_types::Item;
+use crate::{access::Access, heap_types::Item};
 
 pub trait ToTokens {
     fn to_tokens(&self) -> proc_macro2::TokenStream;
 }
+
+//---- Concrete
 
 impl ToTokens for PathBuf {
     fn to_tokens(&self) -> proc_macro2::TokenStream {
@@ -20,6 +22,16 @@ impl ToTokens for PathBuf {
         )
     }
 }
+
+impl ToTokens for String {
+    fn to_tokens(&self) -> proc_macro2::TokenStream {
+        quote!(
+            #self
+        )
+    }
+}
+
+//---- Abstract
 
 impl<T: ToTokens> ToTokens for Vec<T> {
     fn to_tokens(&self) -> proc_macro2::TokenStream {
@@ -42,10 +54,20 @@ impl<T: ToTokens> ToTokens for Option<T> {
     }
 }
 
-impl<T: ToTokens> ToTokens for Arc<T> {
+impl<T: Access> ToTokens for Box<T> {
     fn to_tokens(&self) -> proc_macro2::TokenStream {
         let inner: &T = self;
-        let inner = ToTokens::to_tokens(inner);
+        let inner = inner.access();
+        quote!(
+            || #inner
+        )
+    }
+}
+
+impl<T: Access> ToTokens for Arc<T> {
+    fn to_tokens(&self) -> proc_macro2::TokenStream {
+        let inner: &T = self;
+        let inner = inner.access();
         quote!(
             || #inner
         )
@@ -54,31 +76,18 @@ impl<T: ToTokens> ToTokens for Arc<T> {
 
 impl ToTokens for Weak<Item> {
     fn to_tokens(&self) -> proc_macro2::TokenStream {
-        // let item_name = *self.
-        let inner: &Item = &self.upgrade().unwrap();
-        let inner = inner.access();
-        // let inner = ToTokens::to_tokens(inner);
-        quote!(
-            || #inner
-        )
-    }
-}
-
-impl<T: ToTokens> ToTokens for Box<T> {
-    fn to_tokens(&self) -> proc_macro2::TokenStream {
-        let inner: &T = self;
-        let inner = ToTokens::to_tokens(inner);
-        quote!(
-            || #inner
-        )
-    }
-}
-
-impl ToTokens for String {
-    fn to_tokens(&self) -> proc_macro2::TokenStream {
-        quote!(
-            #self
-        )
+        match self.upgrade() {
+            Some(inner) => {
+                let inner: &Item = &inner;
+                let inner = inner.access();
+                quote!(
+                    || #inner
+                )
+            }
+            None => {
+                quote!(|| todo!("Weak pointer to Item is dangling"))
+            }
+        }
     }
 }
 

@@ -90,7 +90,7 @@ impl TokenMatcher {
     }
 
     pub fn is_destruct(&self, stream: TokenStream) -> bool {
-        let idents = &["Option", "Vec", "PathBuf", "HashMap", "Arc", "Weak"];
+        let idents = &["Option", "Vec", "PathBuf", "HashMap", "Arc", "Weak", "Box"];
 
         let buf = TokenBuffer::new2(stream);
         let cursor = buf.begin();

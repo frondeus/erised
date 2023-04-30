@@ -3,27 +3,31 @@ use quote::quote;
 
 use crate::heap_types::Item;
 
-impl Item {
-    pub(crate) fn access(&self) -> TokenStream {
+pub(crate) trait Access {
+    fn access(&self) -> TokenStream;
+}
+
+impl Access for Item {
+    fn access(&self) -> TokenStream {
         match self {
+            Item::ExternCrate { .. } => quote!(todo!("ExternCrate")),
+            Item::Union(_) => quote!(todo!("Union")),
+            Item::Trait(_) => quote!(todo!("Trait")),
+            Item::TraitAlias(_) => quote!(todo!("TraitAlias")),
+            Item::Typedef(_) => quote!(todo!("Typedef")),
+            Item::OpaqueTy(_) => quote!(todo!("OpaqueTy")),
+            Item::Constant(_) => quote!(todo!("Constant")),
+            Item::Static(_) => quote!(todo!("Static")),
+            Item::ForeignType => quote!(todo!("ForeignType ")),
+            Item::Macro(_) => quote!(todo!("Macro")),
+            Item::ProcMacro(_) => quote!(todo!("ProcMacro")),
+            Item::Primitive(_) => quote!(todo!("Primitive")),
             Item::Module(_)
-            | Item::ExternCrate { .. }
             | Item::Import(_)
-            | Item::Union(_)
-            | Item::Function(_)
-            | Item::Trait(_)
-            | Item::TraitAlias(_)
             | Item::Impl(_)
-            | Item::Typedef(_)
-            | Item::OpaqueTy(_)
-            | Item::Constant(_)
-            | Item::Static(_)
-            | Item::ForeignType
-            | Item::Macro(_)
-            | Item::ProcMacro(_)
-            | Item::Primitive(_)
+            | Item::Function(_)
             | Item::AssocConst { .. }
-            | Item::AssocType { .. } => quote!(todo!()),
+            | Item::AssocType { .. } => quote!(#self),
             Item::Struct(strukt) => {
                 let path = strukt.meta.get_formatted_path();
                 quote!(
@@ -37,5 +41,41 @@ impl Item {
                 )
             }
         }
+    }
+}
+
+impl Access for crate::heap_types::Type {
+    fn access(&self) -> TokenStream {
+        crate::destruct::ToTokens::to_tokens(self)
+    }
+}
+
+impl Access for crate::heap_types::FunctionPointer {
+    fn access(&self) -> TokenStream {
+        crate::destruct::ToTokens::to_tokens(self)
+    }
+}
+
+impl Access for crate::heap_types::GenericArgs {
+    fn access(&self) -> TokenStream {
+        crate::destruct::ToTokens::to_tokens(self)
+    }
+}
+
+impl Access for crate::heap_types::ExternalCrate {
+    fn access(&self) -> TokenStream {
+        crate::destruct::ToTokens::to_tokens(self)
+    }
+}
+
+impl Access for crate::heap_types::ItemSummary {
+    fn access(&self) -> TokenStream {
+        crate::destruct::ToTokens::to_tokens(self)
+    }
+}
+
+impl Access for crate::heap_types::Module {
+    fn access(&self) -> TokenStream {
+        crate::destruct::ToTokens::to_tokens(self)
     }
 }

@@ -25,7 +25,7 @@ impl ItemMeta {
 impl Crate {
     pub fn generate_static(&self) -> TokenStream {
         let name = &self.root.name;
-        let _uppercase_name = format_ident!("{}", name.to_screaming_snake_case());
+        let uppercase_name = format_ident!("{}", name.to_screaming_snake_case());
         let lowercase_name = format_ident!("{}", name.to_snake_case());
 
         let mut items = vec![];
@@ -73,6 +73,7 @@ impl Crate {
         }
 
         quote::quote!(
+            #![allow(dead_code)]
             pub trait Reflect {
                 const TYPE_INFO: erised::types::Item;
             }
@@ -81,7 +82,7 @@ impl Crate {
 
                 #(#items)*
             }
-            // pub const #uppercase_name: erised::types::Crate = #self;
+            pub const #uppercase_name: erised::types::Crate = #self;
         )
     }
 }
