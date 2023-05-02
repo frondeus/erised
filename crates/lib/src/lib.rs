@@ -31,7 +31,7 @@ pub mod build {
     }
 
     impl Builder {
-        pub fn build_static(self, target: impl AsRef<Path>) {
+        pub fn build_static_reflection(self, target: impl AsRef<Path>) {
             let krate = self.build().expect("Could not generate rust reflection");
             let info = krate.generate_static();
 

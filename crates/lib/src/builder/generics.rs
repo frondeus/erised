@@ -50,10 +50,24 @@ impl Builder {
                 }
             }
             rustdoc_types::WherePredicate::RegionPredicate {
-                lifetime: _,
-                bounds: _,
-            } => todo!(),
-            rustdoc_types::WherePredicate::EqPredicate { lhs: _, rhs: _ } => todo!(),
+                lifetime,
+                bounds: source_bounds,
+            } => {
+                let mut bounds = vec![];
+                for bound in source_bounds {
+                    bounds.push(self.build_generic_bound(cache, bound)?);
+                }
+                WherePredicate::RegionPredicate {
+                    lifetime: lifetime.clone(),
+                    bounds,
+                }
+            }
+            rustdoc_types::WherePredicate::EqPredicate { lhs, rhs } => {
+                WherePredicate::EqPredicate {
+                    lhs: self.build_type(cache, lhs)?,
+                    rhs: self.build_term(cache, rhs)?,
+                }
+            }
         })
     }
 }

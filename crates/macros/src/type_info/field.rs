@@ -16,9 +16,15 @@ pub struct TypeInfoField {
     vis: Visibility,
     ident: Option<Ident>,
     pub(crate) ty: Type,
+
+    #[darling(default)]
+    skip: bool,
 }
 
 impl TypeInfoField {
+    pub fn filter(self: &&Self) -> bool {
+        !self.skip
+    }
     pub fn ident_quote(&self) -> TokenStream2 {
         match &self.ident {
             Some(ident) => quote!(#ident:),
@@ -40,12 +46,12 @@ impl TypeInfoField {
 
         // TokenMatcher.gen_destruct(self.ty_quote())
 
-        if TokenMatcher.is_destruct(self.ty_quote()) {
-            // return quote!(erised::destruct::Destruct(#destructed));
-            return quote!(erised::destruct::ToTokens::to_tokens(#destructed));
-        }
+        // if TokenMatcher.is_destruct(self.ty_quote()) {
+        //     // return quote!(erised::destruct::Destruct(#destructed));
+        return quote!(erised::destruct::ToTokens::to_tokens(#destructed, paths));
+        // }
 
-        quote!(#destructed)
+        // quote!(#destructed)
     }
 
     pub fn ty_quote(&self) -> TokenStream2 {
@@ -66,6 +72,15 @@ impl TypeInfoField {
         quote!(#vis #ident #ty)
     }
 
+    // pub fn gen_to_tokens(&self, idx: usize) -> TokenStream2 {
+    //     let ident = self.ident_quote();
+    //     let val = self.destruct(idx);
+    //     let hash = Punct::new('#', Spacing::Alone);
+    //     // let ident_access = self.ident_access(idx);
+    //     quote!(
+    //         #ident #hash #val
+    //     )
+    // }
     pub fn gen_to_tokens(&self, idx: usize) -> TokenStream2 {
         let ident = self.ident_quote();
         let val = self.destruct(idx);

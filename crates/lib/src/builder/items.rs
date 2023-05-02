@@ -15,6 +15,8 @@ mod functions;
 mod impls;
 mod imports;
 mod modules;
+mod opaque_types;
+mod statics;
 mod structs;
 mod traits;
 mod typedefs;
@@ -30,6 +32,7 @@ impl Builder {
             .ok()
             .map(|i| ItemSummary::clone(&i));
         Ok(ItemMeta {
+            id: crate::heap_types::Id(item.id.0.clone()),
             krate: self.get_crate(cache, item.crate_id)?,
             span: self.build_span(cache, item.span.as_ref())?,
             visibility: self.build_visibility(cache, &item.visibility)?,
@@ -73,11 +76,11 @@ impl Builder {
             rustdoc_types::ItemEnum::Module(module) => {
                 Ok(Item::Module(self.build_module(cache, name, meta, module)?))
             }
-            rustdoc_types::ItemEnum::ExternCrate { name: _, rename: _ } => todo!(),
+            rustdoc_types::ItemEnum::ExternCrate { name: _, rename: _ } => todo!("extern crate"),
             rustdoc_types::ItemEnum::Import(import) => {
                 Ok(Item::Import(self.build_import(cache, meta, import)?))
             }
-            rustdoc_types::ItemEnum::Union(_) => todo!(),
+            rustdoc_types::ItemEnum::Union(_) => todo!("union"),
             rustdoc_types::ItemEnum::Struct(strukt) => {
                 Ok(Item::Struct(self.build_struct(cache, name, meta, strukt)?))
             }
@@ -90,20 +93,28 @@ impl Builder {
             rustdoc_types::ItemEnum::Trait(trait_) => {
                 Ok(Item::Trait(self.build_trait(cache, name, meta, trait_)?))
             }
-            rustdoc_types::ItemEnum::TraitAlias(_) => todo!(),
+            rustdoc_types::ItemEnum::TraitAlias(_) => todo!("trait alias"),
             rustdoc_types::ItemEnum::Impl(i) => Ok(Item::Impl(self.build_impl(cache, meta, i)?)),
             rustdoc_types::ItemEnum::Typedef(typedf) => Ok(Item::Typedef(
                 self.build_typedef(cache, name, meta, typedf)?,
             )),
-            rustdoc_types::ItemEnum::OpaqueTy(_) => todo!(),
+            rustdoc_types::ItemEnum::OpaqueTy(o) => {
+                Ok(Item::OpaqueTy(self.build_opaque_ty(cache, name, meta, o)?))
+            }
             rustdoc_types::ItemEnum::Constant(c) => Ok(Item::Constant(
                 self.build_constant_item(cache, name, meta, c)?,
             )),
-            rustdoc_types::ItemEnum::Static(_) => todo!(),
-            rustdoc_types::ItemEnum::ForeignType => todo!(),
-            rustdoc_types::ItemEnum::Macro(_) => todo!(),
-            rustdoc_types::ItemEnum::ProcMacro(_) => todo!(),
-            rustdoc_types::ItemEnum::Primitive(_) => todo!(),
+            rustdoc_types::ItemEnum::Static(s) => {
+                Ok(Item::Static(self.build_static(cache, name, meta, s)?))
+            }
+            rustdoc_types::ItemEnum::ForeignType => todo!("foregin type"),
+            rustdoc_types::ItemEnum::Macro(m) => Ok(Item::Macro {
+                name: name.unwrap(),
+                meta,
+                expr: m.clone(),
+            }),
+            rustdoc_types::ItemEnum::ProcMacro(_) => todo!("proc macro"),
+            rustdoc_types::ItemEnum::Primitive(_) => todo!("primitive"),
             rustdoc_types::ItemEnum::AssocConst { type_, default } => Ok(Item::AssocConst {
                 meta,
                 type_: self.build_type(cache, type_)?,

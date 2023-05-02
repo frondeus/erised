@@ -7,6 +7,6 @@ fn main() {
             .replace_with_crate(CrateReplacement::Root)
             .load()
             .expect("Could not generate JSON")
-            .build_static("./src/reflection.rs");
+            .build_static_reflection("./src/reflection.rs");
     }
 }

@@ -60,11 +60,22 @@ impl TypeInfo {
             }
             ast::Data::Struct(fields) => {
                 let style = fields.style;
-                let mapped_fields = fields.iter().enumerate().map(|(idx, f)| f.map(idx));
+                let mapped_fields = fields
+                    .iter()
+                    .enumerate()
+                    .filter(|(_, p)| p.filter())
+                    .map(|(idx, f)| f.map(idx));
                 let construct = fields
                     .iter()
                     .enumerate()
+                    .filter(|(_, p)| p.filter())
                     .map(|(idx, f)| f.gen_to_tokens(idx));
+                let filtered_fields: Vec<_> = fields
+                    .iter()
+                    .enumerate()
+                    .filter(|(_, p)| p.filter())
+                    .map(|(idx, f)| f.destruct(idx))
+                    .collect();
 
                 let fields: Vec<_> = fields
                     .iter()
@@ -74,7 +85,7 @@ impl TypeInfo {
                 match style {
                     ast::Style::Tuple => quote!(
                         let &Self ( #(#fields),* ) = &self;
-                        let ( #(#fields),* ) = (#(#mapped_fields),*);
+                        let ( #(#filtered_fields),* ) = (#(#mapped_fields),*);
                         quote::quote!(
                             erised::types::#ident (
                                 #(#construct),*
@@ -83,7 +94,7 @@ impl TypeInfo {
                     ),
                     ast::Style::Struct => quote!(
                         let &Self { #(#fields),* } = &self;
-                        let ( #(#fields),* ) = (#(#mapped_fields),*);
+                        let ( #(#filtered_fields),* ) = (#(#mapped_fields),*);
                         // let #static_ident {
                         //     #(#fields),*
                         // } = &self.into();
@@ -102,16 +113,17 @@ impl TypeInfo {
 
         quote!(
             impl erised::destruct::ToTokens for #ident {
-                fn to_tokens(&self) -> proc_macro2::TokenStream {
+                fn to_tokens(&self, paths: &mut erised::destruct::ItemsPaths) -> proc_macro2::TokenStream {
                     #destruct
                 }
             }
-            impl quote::ToTokens for #ident {
-                fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-                    use quote::TokenStreamExt;
-                    tokens.append_all(erised::destruct::ToTokens::to_tokens(self))
-                }
-            }
+            // impl quote::ToTokens for #ident {
+            //     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+            //         use quote::TokenStreamExt;
+            //         let mut paths = erised::destruct::ItemsPaths::default();
+            //         tokens.append_all(erised::destruct::ToTokens::to_tokens(self, &mut paths))
+            //     }
+            // }
         )
     }
 
@@ -136,7 +148,7 @@ impl TypeInfo {
             }
             ast::Data::Struct(fields) => {
                 let style = fields.style;
-                let fields = fields.iter().map(|f| f.gen());
+                let fields = fields.iter().filter(TypeInfoField::filter).map(|f| f.gen());
                 match style {
                     ast::Style::Tuple => quote!(
                         pub struct #ident (

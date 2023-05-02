@@ -59,19 +59,20 @@ mod paths;
 mod types;
 
 pub struct BuilderOpts {
-    manifest_path: PathBuf,
-    target_dir: Option<PathBuf>,
-    target: Option<String>,
-    quiet: bool,
-    silent: bool,
-    no_default_features: bool,
-    all_features: bool,
-    features: Vec<String>,
-    package: Option<String>,
-    package_target: PackageTarget,
-    document_private_items: bool,
-    cap_lints: Option<String>,
-    crate_replacement: Option<CrateReplacement>,
+    pub toolchain: Option<String>,
+    pub manifest_path: PathBuf,
+    pub target_dir: Option<PathBuf>,
+    pub target: Option<String>,
+    pub quiet: bool,
+    pub silent: bool,
+    pub no_default_features: bool,
+    pub all_features: bool,
+    pub features: Vec<String>,
+    pub package: Option<String>,
+    pub package_target: PackageTarget,
+    pub document_private_items: bool,
+    pub cap_lints: Option<String>,
+    pub crate_replacement: Option<CrateReplacement>,
 }
 
 #[derive(Default, Debug, Clone)]
@@ -100,6 +101,7 @@ impl Default for BuilderOpts {
     fn default() -> Self {
         Self {
             manifest_path: "Cargo.toml".into(),
+            toolchain: Some("nightly".to_owned()),
             target_dir: None,
             target: None,
             quiet: false,
@@ -119,6 +121,7 @@ impl Default for BuilderOpts {
 impl From<BuilderOpts> for rustdoc_json::Builder {
     fn from(
         BuilderOpts {
+            toolchain,
             manifest_path,
             target_dir,
             target,
@@ -135,7 +138,6 @@ impl From<BuilderOpts> for rustdoc_json::Builder {
         }: BuilderOpts,
     ) -> Self {
         let mut builder = rustdoc_json::Builder::default()
-            .toolchain("nightly")
             .manifest_path(manifest_path)
             .quiet(quiet)
             .silent(silent)
@@ -156,11 +158,20 @@ impl From<BuilderOpts> for rustdoc_json::Builder {
             builder = builder.package(package);
         }
 
+        if let Some(toolchain) = toolchain {
+            builder = builder.toolchain(toolchain);
+        }
+
         builder
     }
 }
 
 impl BuilderOpts {
+    pub fn use_default_toolchain(mut self) -> Self {
+        self.toolchain = None;
+        self
+    }
+
     pub fn manifest_dir(mut self, dir: impl AsRef<std::path::Path>) -> Self {
         let dir = dir.as_ref();
         self.manifest_path = dir.join("Cargo.toml");

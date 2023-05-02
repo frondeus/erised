@@ -58,8 +58,14 @@ pub struct ItemSummary {
     pub kind: ItemKind,
 }
 
+/// This struct should not be really used for anything else than to quickly match if two Weak<Item> points to the same item.
+#[derive(Debug, Clone, TypeInfo, Eq, Hash, PartialEq)]
+pub struct Id(pub(crate) String);
+
 #[derive(Debug, Clone, TypeInfo)]
 pub struct ItemMeta {
+    #[type_info(skip)]
+    pub id: Id,
     /// This can be used as a key to the `external_crates` map of [`Crate`] to see which crate
     /// this item came from.
     pub krate: Arc<ExternalCrate>,
@@ -269,7 +275,11 @@ pub enum Item {
     ForeignType,
 
     /// Declarative macro_rules! macro
-    Macro(String),
+    Macro {
+        name: String,
+        meta: ItemMeta,
+        expr: String,
+    },
     ProcMacro(ProcMacro),
 
     Primitive(Primitive),
@@ -736,12 +746,16 @@ pub struct Typedef {
 
 #[derive(Debug, Clone, TypeInfo)]
 pub struct OpaqueTy {
+    pub name: String,
+    pub meta: ItemMeta,
     pub bounds: Vec<GenericBound>,
     pub generics: Generics,
 }
 
 #[derive(Debug, Clone, TypeInfo)]
 pub struct Static {
+    pub name: String,
+    pub meta: ItemMeta,
     pub type_: Type,
     pub mutable: bool,
     pub expr: String,
