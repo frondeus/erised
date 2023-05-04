@@ -19,10 +19,6 @@ pub struct Crate {
     /// A collection of all items in the local crate as well as some external traits and their
     /// items that are referenced locally.
     pub all_items: Vec<Arc<Item>>,
-    /// Maps IDs to fully qualified paths and other info helpful for generating links.
-    pub summaries: Vec<Arc<ItemSummary>>,
-    /// Maps `crate_id` of items to a crate name and html_root_url if it exists.
-    pub external_crates: Vec<Arc<ExternalCrate>>,
 }
 
 #[derive(Debug, Clone, TypeInfo)]

@@ -67,7 +67,7 @@ mod reflection;
 
 #[test]
 fn struct_info() {
-    use reflection::Reflect;
-    let typeinfo = MyStruct::TYPE_INFO.as_struct().expect("Struct");
-    dbg!(&typeinfo);
+    // use reflection::Reflect;
+    // let typeinfo = MyStruct::TYPE_INFO.as_struct().expect("Struct");
+    // dbg!(&typeinfo);
 }

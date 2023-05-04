@@ -329,8 +329,6 @@ impl Builder {
             root,
             crate_version: self.source.crate_version,
             all_items: all_items.into_values().collect(),
-            summaries: vec![],
-            external_crates: vec![],
         })
     }
 }

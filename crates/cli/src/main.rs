@@ -84,48 +84,19 @@ fn main() -> Result<(), StaticReflectionError> {
     let builder = erised::builder::BuilderOpts::from(args)
         .load()
         .into_report()
-        .change_context(StaticReflectionError::CouldNotLoadJSONOutput)?;
+        .change_context(StaticReflectionError)?;
 
-    let krate = builder
-        .build()
+    builder
+        .build_static_reflection(output)
         .into_report()
-        .change_context(StaticReflectionError::CouldNotBuildRustReflection)?;
-
-    let info = krate.generate_static();
-
-    let mut file = std::fs::OpenOptions::new()
-        .read(true)
-        .write(true)
-        .create(true)
-        .truncate(true)
-        .open(&output)
-        .into_report()
-        .change_context(StaticReflectionError::CouldNotOpenTheFile(output))?;
-
-    write!(&mut file, "{info}")
-        .into_report()
-        .change_context(StaticReflectionError::CouldNotWriteResult)?;
-
-    file.flush()
-        .into_report()
-        .change_context(StaticReflectionError::CouldNotFlushResult)?;
+        .change_context(StaticReflectionError)?;
 
     Ok(())
 }
 
 #[derive(Error, Debug)]
-enum StaticReflectionError {
-    #[error("Could not build reflection")]
-    CouldNotLoadJSONOutput,
-    #[error("Could not build reflection")]
-    CouldNotBuildRustReflection,
-    #[error("Could not build reflection")]
-    CouldNotOpenTheFile(PathBuf),
-    #[error("Could not build reflection")]
-    CouldNotWriteResult,
-    #[error("Could not build reflection")]
-    CouldNotFlushResult,
-}
+#[error("Could not build static reflection")]
+struct StaticReflectionError;
 
 impl From<BuildArgs> for erised::builder::BuilderOpts {
     fn from(value: BuildArgs) -> Self {

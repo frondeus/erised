@@ -8,39 +8,6 @@ use crate::{
 };
 
 impl Item {
-    pub(crate) fn meta(&self) -> &ItemMeta {
-        match self {
-            Item::Module(v) => &v.meta,
-            Item::ExternCrate { meta, name, rename } => meta,
-            Item::Import(v) => &v.meta,
-            Item::Union(v) => todo!(),
-            Item::Struct(v) => &v.meta,
-            Item::Enum(v) => &v.meta,
-            Item::Function(v) => &v.meta,
-            Item::Trait(v) => &v.meta,
-            Item::TraitAlias(v) => todo!(),
-            Item::Impl(v) => &v.meta,
-            Item::Typedef(v) => &v.meta,
-            Item::OpaqueTy(v) => &v.meta,
-            Item::Constant(v) => &v.meta,
-            Item::Static(v) => &v.meta,
-            Item::ForeignType => todo!(),
-            Item::Macro { name, meta, expr } => meta,
-            Item::ProcMacro(v) => todo!(),
-            Item::Primitive(v) => todo!(),
-            Item::AssocConst {
-                meta,
-                type_,
-                default,
-            } => meta,
-            Item::AssocType {
-                meta,
-                generics,
-                bounds,
-                default,
-            } => meta,
-        }
-    }
     pub(crate) fn name(&self, counter: &mut usize) -> String {
         let mut idx = |name: &str| {
             let idx = *counter;
