@@ -33,7 +33,7 @@ fn main() -> anyhow::Result<()> {
 
     let imp = quote::quote!(
         use crate::heap_types::*;
-        use std::sync::Weak;
+        use std::sync::{Arc, Weak};
         use crate as erised;
 
         #to_tokens
