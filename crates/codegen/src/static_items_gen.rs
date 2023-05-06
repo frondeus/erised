@@ -321,6 +321,16 @@ impl<'a> Visitor for FieldVisitor<'a> {
         if field.meta.attrs.contains(&"#[type_info(skip)]".to_owned()) {
             return;
         }
+        match &field.meta.visibility {
+            Visibility::Public => {
+                quote!(self.codegen.output, pub);
+            }
+            Visibility::Default => (),
+            Visibility::Crate => {
+                quote!(self.codegen.output, pub(crate));
+            }
+            Visibility::Restricted { parent, path } => todo!(),
+        }
         if !field.is_part_of_tuple {
             let name = format_ident!("{}", field.name);
             quote!(self.codegen.output, #name:);
