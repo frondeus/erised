@@ -190,10 +190,7 @@ impl Visitor for ToTokensGenerator {
                 );
             }
             StructKind::Tuple(_) => todo!(),
-            StructKind::Plain {
-                fields,
-                fields_stripped,
-            } => {
+            StructKind::Plain { .. } => {
                 let destruct = codegen.branch(|codegen| {
                     Destructor {
                         codegen,
@@ -312,16 +309,17 @@ impl<'a> Visitor for Constructor<'a> {
             return;
         }
 
-        let name = if !field.is_part_of_tuple {
-            format_ident!("{}", field.name)
+        if !field.is_part_of_tuple {
+            let name = format_ident!("{}", field.name);
+            let hash = Punct::new('#', Spacing::Joint);
+            let hashed_name = quote::quote!(#hash #name);
+            quote!(self.codegen.output, #name : #hashed_name );
         } else {
-            format_ident!("_{}", self.get_idx())
+            let name = format_ident!("_{}", self.get_idx());
+            let hash = Punct::new('#', Spacing::Joint);
+            let hashed_name = quote::quote!(#hash #name);
+            quote!(self.codegen.output, #hashed_name);
         };
-
-        let hash = Punct::new('#', Spacing::Joint);
-        let hashed_name = quote::quote!(#hash #name);
-
-        quote!(self.codegen.output, #name : #hashed_name );
 
         self.trailing_comma();
     }
