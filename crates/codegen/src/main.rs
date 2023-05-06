@@ -28,11 +28,22 @@ fn main() -> anyhow::Result<()> {
     finder.visit_crate(&krate);
 
     let static_items = pretty_print(&finder.static_items.output)?;
-    let to_tokens = pretty_print(&finder.to_tokens.output)?;
-    let extra = pretty_print(&finder.extra.output)?;
+    let to_tokens = &finder.to_tokens.output;
+    let extra = &finder.extra.output;
+
+    let imp = quote::quote!(
+        use crate::heap_types::*;
+        use std::sync::Weak;
+        use crate as erised;
+
+        #to_tokens
+        #extra
+    );
+
+    let imp = pretty_print(imp)?;
 
     write_file("crates/lib/src/types.rs", &static_items)?;
-    write_file("crates/lib/src/imp.rs", &format!("{to_tokens}\n{extra}\n"))?;
+    write_file("crates/lib/src/imp.rs", &imp)?;
 
     Ok(())
 }
