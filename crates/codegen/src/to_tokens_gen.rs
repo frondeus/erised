@@ -22,8 +22,7 @@ impl ToTokensGenerator {
     fn branch(&mut self, f: impl FnOnce(&mut Self)) -> TokenStream {
         let saved = std::mem::take(&mut self.output);
         f(self);
-        let inner = std::mem::replace(&mut self.output, saved);
-        inner
+        std::mem::replace(&mut self.output, saved)
     }
 }
 

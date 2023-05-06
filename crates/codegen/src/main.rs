@@ -27,20 +27,30 @@ fn main() -> anyhow::Result<()> {
 
     finder.visit_crate(&krate);
 
-    let static_items = pretty_print(&finder.static_items.output)?;
+    let static_items = &finder.static_items.output;
+    let static_items = pretty_print(quote::quote!(
+        #![allow(clippy::type_complexity, clippy::just_underscores_and_digits)]
+
+        #static_items
+    ))?;
+
     let to_tokens = &finder.to_tokens.output;
     let extra = &finder.extra.output;
 
-    let imp = quote::quote!(
+    let imp = pretty_print(quote::quote!(
+        #![allow(
+            clippy::type_complexity,
+            unused_variables,
+            clippy::just_underscores_and_digits
+        )]
+
         use crate::heap_types::*;
         use std::sync::{Arc, Weak};
         use crate as erised;
 
         #to_tokens
         #extra
-    );
-
-    let imp = pretty_print(imp)?;
+    ))?;
 
     write_file("crates/lib/src/types.rs", &static_items)?;
     write_file("crates/lib/src/imp.rs", &imp)?;

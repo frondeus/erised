@@ -1,3 +1,9 @@
+#![allow(
+    clippy::type_complexity,
+    unused_variables,
+    clippy::just_underscores_and_digits
+)]
+
 use crate as erised;
 use crate::heap_types::*;
 use std::sync::{Arc, Weak};

@@ -23,8 +23,7 @@ impl StaticItemsGenerator {
     fn branch(&mut self, f: impl FnOnce(&mut Self)) -> TokenStream {
         let saved = std::mem::take(&mut self.output);
         f(self);
-        let inner = std::mem::replace(&mut self.output, saved);
-        inner
+        std::mem::replace(&mut self.output, saved)
     }
 }
 
@@ -329,7 +328,7 @@ impl<'a> Visitor for FieldVisitor<'a> {
             Visibility::Crate => {
                 quote!(self.codegen.output, pub(crate));
             }
-            Visibility::Restricted { parent, path } => todo!(),
+            Visibility::Restricted { parent: _, path: _ } => todo!(),
         }
         if !field.is_part_of_tuple {
             let name = format_ident!("{}", field.name);
@@ -340,7 +339,7 @@ impl<'a> Visitor for FieldVisitor<'a> {
     fn visit_type(&mut self, ty: &Type) {
         match ty {
             Type::ResolvedPath(path) => match &path.target {
-                Identifiable::Item(i) => {
+                Identifiable::Item(_) => {
                     let static_name = format_ident!("{}", path.name);
                     quote!(self.codegen.output, #static_name);
                 }
@@ -400,20 +399,23 @@ impl<'a> Visitor for FieldVisitor<'a> {
                 quote!(self.codegen.output, ( #inner ));
             }
             Type::Slice(_) => todo!(),
-            Type::Array { type_, len } => todo!(),
+            Type::Array { type_: _, len: _ } => todo!(),
             Type::ImplTrait(_) => todo!(),
             Type::Infer => todo!(),
-            Type::RawPointer { mutable, type_ } => todo!(),
+            Type::RawPointer {
+                mutable: _,
+                type_: _,
+            } => todo!(),
             Type::BorrowedRef {
-                lifetime,
-                mutable,
-                type_,
+                lifetime: _,
+                mutable: _,
+                type_: _,
             } => todo!(),
             Type::QualifiedPath {
-                name,
-                args,
-                self_type,
-                trait_,
+                name: _,
+                args: _,
+                self_type: _,
+                trait_: _,
             } => todo!(),
         }
         self.trailing_comma();
@@ -538,7 +540,7 @@ impl<'a> Visitor for Typper<'a> {
     fn visit_type(&mut self, ty: &Type) {
         match ty {
             Type::ResolvedPath(path) => match &path.target {
-                Identifiable::Item(i) => {
+                Identifiable::Item(_) => {
                     let static_name = format_ident!("{}", path.name);
                     quote!(self.codegen.output, #static_name);
                 }
@@ -600,20 +602,23 @@ impl<'a> Visitor for Typper<'a> {
                 quote!(self.codegen.output, ( #inner ));
             }
             Type::Slice(_) => todo!(),
-            Type::Array { type_, len } => todo!(),
+            Type::Array { type_: _, len: _ } => todo!(),
             Type::ImplTrait(_) => todo!(),
             Type::Infer => todo!(),
-            Type::RawPointer { mutable, type_ } => todo!(),
+            Type::RawPointer {
+                mutable: _,
+                type_: _,
+            } => todo!(),
             Type::BorrowedRef {
-                lifetime,
-                mutable,
-                type_,
+                lifetime: _,
+                mutable: _,
+                type_: _,
             } => todo!(),
             Type::QualifiedPath {
-                name,
-                args,
-                self_type,
-                trait_,
+                name: _,
+                args: _,
+                self_type: _,
+                trait_: _,
             } => todo!(),
         }
         self.trailing_comma();

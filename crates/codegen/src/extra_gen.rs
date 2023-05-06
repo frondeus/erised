@@ -3,7 +3,7 @@ use erised::{
     visitor::{CycleDetector, Visitor},
 };
 use inflector::Inflector;
-use proc_macro2::{Punct, Spacing, TokenStream};
+use proc_macro2::TokenStream;
 use quote::format_ident;
 use quote::TokenStreamExt;
 
@@ -23,8 +23,7 @@ impl ExtraGenerator {
     fn branch(&mut self, f: impl FnOnce(&mut Self)) -> TokenStream {
         let saved = std::mem::take(&mut self.output);
         f(self);
-        let inner = std::mem::replace(&mut self.output, saved);
-        inner
+        std::mem::replace(&mut self.output, saved)
     }
 }
 
@@ -308,11 +307,11 @@ impl<'a> Visitor for Typper<'a> {
 
         self.visit_type(&field.ty);
     }
-    fn visit_item(&mut self, item: &Item) {}
+    fn visit_item(&mut self, _: &Item) {}
     fn visit_type(&mut self, ty: &Type) {
         match ty {
             Type::ResolvedPath(path) => match &path.target {
-                Identifiable::Item(i) => {
+                Identifiable::Item(_) => {
                     let name = format_ident!("{}", path.name);
                     quote!(self.codegen.output, #name);
                     dbg!(&path);
@@ -352,20 +351,23 @@ impl<'a> Visitor for Typper<'a> {
                 quote!(self.codegen.output, ( #inner ));
             }
             Type::Slice(_) => todo!(),
-            Type::Array { type_, len } => todo!(),
+            Type::Array { type_: _, len: _ } => todo!(),
             Type::ImplTrait(_) => todo!(),
             Type::Infer => todo!(),
-            Type::RawPointer { mutable, type_ } => todo!(),
+            Type::RawPointer {
+                mutable: _,
+                type_: _,
+            } => todo!(),
             Type::BorrowedRef {
-                lifetime,
-                mutable,
-                type_,
+                lifetime: _,
+                mutable: _,
+                type_: _,
             } => todo!(),
             Type::QualifiedPath {
-                name,
-                args,
-                self_type,
-                trait_,
+                name: _,
+                args: _,
+                self_type: _,
+                trait_: _,
             } => {
                 todo!()
             }

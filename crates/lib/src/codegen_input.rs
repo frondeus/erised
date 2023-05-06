@@ -1,4 +1,3 @@
-use crate as erised;
 use erised_macros::TypeInfo;
 
 use std::path::PathBuf;

@@ -17,4 +17,5 @@ pub fn type_info(item: TokenStream) -> TokenStream {
     TokenStream::from(type_info)
 }
 
+#[allow(dead_code)]
 mod type_info;
