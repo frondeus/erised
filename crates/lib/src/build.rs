@@ -13,7 +13,11 @@ impl BuilderOpts {
         if !ensure_there_is_no_cycle() {
             return None;
         }
-        Some(Self::default().manifest_dir(manifest_dir))
+        Some(
+            Self::default()
+                .target_dir(manifest_dir.join("erised_target"))
+                .manifest_dir(manifest_dir),
+        )
     }
 }
 

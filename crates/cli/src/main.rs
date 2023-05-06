@@ -14,7 +14,6 @@ pub struct BuildArgs {
     use_default_toolchain: bool,
     #[arg(long, default_value = "Cargo.toml")]
     manifest_path: PathBuf,
-    /// By default it is `${manifest_path}/erised_target` directory
     /// Set what `--target-dir` to pass to `cargo`.
     #[arg(long)]
     target_dir: Option<PathBuf>,

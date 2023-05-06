@@ -175,7 +175,6 @@ impl BuilderOpts {
     pub fn manifest_dir(mut self, dir: impl AsRef<std::path::Path>) -> Self {
         let dir = dir.as_ref();
         self.manifest_path = dir.join("Cargo.toml");
-        self.target_dir = Some(dir.join("erised_target"));
         self
     }
 

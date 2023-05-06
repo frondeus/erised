@@ -1,4 +1,8 @@
-pub mod heap_types;
+pub mod codegen_input;
+
+pub mod heap_types {
+    pub use crate::codegen_input::*;
+}
 
 pub mod types;
 
