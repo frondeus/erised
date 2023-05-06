@@ -44,14 +44,7 @@ impl TypeInfoField {
     pub fn map(&self, idx: usize) -> TokenStream2 {
         let destructed = self.destruct(idx);
 
-        // TokenMatcher.gen_destruct(self.ty_quote())
-
-        // if TokenMatcher.is_destruct(self.ty_quote()) {
-        //     // return quote!(erised::destruct::Destruct(#destructed));
-        return quote!(erised::destruct::ToTokens::to_tokens(#destructed, paths));
-        // }
-
-        // quote!(#destructed)
+        quote!(erised::destruct::ToTokens::to_tokens(#destructed, paths))
     }
 
     pub fn ty_quote(&self) -> TokenStream2 {
@@ -65,27 +58,14 @@ impl TypeInfoField {
         let vis = &self.vis;
 
         let ty = TokenMatcher.gen(ty);
-        // if let Some(alias) = self.alias.as_ref() {
-        //     return quote!(#ident #alias);
-        // };
 
         quote!(#vis #ident #ty)
     }
 
-    // pub fn gen_to_tokens(&self, idx: usize) -> TokenStream2 {
-    //     let ident = self.ident_quote();
-    //     let val = self.destruct(idx);
-    //     let hash = Punct::new('#', Spacing::Alone);
-    //     // let ident_access = self.ident_access(idx);
-    //     quote!(
-    //         #ident #hash #val
-    //     )
-    // }
     pub fn gen_to_tokens(&self, idx: usize) -> TokenStream2 {
         let ident = self.ident_quote();
         let val = self.destruct(idx);
         let hash = Punct::new('#', Spacing::Alone);
-        // let ident_access = self.ident_access(idx);
         quote!(
             #ident #hash #val
         )

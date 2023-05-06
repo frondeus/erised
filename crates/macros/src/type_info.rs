@@ -112,18 +112,19 @@ impl TypeInfo {
         };
 
         quote!(
+            #[allow(unused_variables)]
             impl erised::destruct::ToTokens for #ident {
                 fn to_tokens(&self, paths: &mut erised::destruct::ItemsPaths) -> proc_macro2::TokenStream {
                     #destruct
                 }
             }
-            // impl quote::ToTokens for #ident {
-            //     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-            //         use quote::TokenStreamExt;
-            //         let mut paths = erised::destruct::ItemsPaths::default();
-            //         tokens.append_all(erised::destruct::ToTokens::to_tokens(self, &mut paths))
-            //     }
-            // }
+            impl quote::ToTokens for #ident {
+                fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+                    use quote::TokenStreamExt;
+                    let mut paths = erised::destruct::ItemsPaths::default();
+                    tokens.append_all(erised::destruct::ToTokens::to_tokens(self, &mut paths))
+                }
+            }
         )
     }
 

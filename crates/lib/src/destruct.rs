@@ -153,10 +153,8 @@ impl ToTokens for Weak<Item> {
 }
 
 impl<A: quote::ToTokens, B: quote::ToTokens> ToTokens for (A, B) {
-    fn to_tokens(&self, paths: &mut ItemsPaths) -> proc_macro2::TokenStream {
+    fn to_tokens(&self, _paths: &mut ItemsPaths) -> proc_macro2::TokenStream {
         let (a, b) = self;
-        // let a = Destructive::to_tokens(a);
-        // let b = Destructive::to_tokens(b);
         quote!(
             (#a, #b)
         )
@@ -164,7 +162,7 @@ impl<A: quote::ToTokens, B: quote::ToTokens> ToTokens for (A, B) {
 }
 
 impl<K: quote::ToTokens, V: quote::ToTokens> ToTokens for HashMap<K, V> {
-    fn to_tokens(&self, paths: &mut ItemsPaths) -> proc_macro2::TokenStream {
+    fn to_tokens(&self, _paths: &mut ItemsPaths) -> proc_macro2::TokenStream {
         let v = self.iter().map(|(k, v)| {
             quote!(
                 ( #k, #v )
@@ -179,7 +177,7 @@ impl<K: quote::ToTokens, V: quote::ToTokens> ToTokens for HashMap<K, V> {
 macro_rules! primitive_to_tokens {
     ($a: ty) => {
         impl ToTokens for $a {
-            fn to_tokens(&self, paths: &mut ItemsPaths) -> proc_macro2::TokenStream {
+            fn to_tokens(&self, _paths: &mut ItemsPaths) -> proc_macro2::TokenStream {
                 quote!( #self )
             }
         }

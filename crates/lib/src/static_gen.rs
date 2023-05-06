@@ -11,7 +11,7 @@ impl Item {
     pub(crate) fn name(&self, counter: &mut usize) -> String {
         let mut idx = |name: &str| {
             let idx = *counter;
-            *counter = *counter + 1;
+            *counter += 1;
             format!("{name}_{idx}")
         };
 
@@ -31,47 +31,38 @@ impl Item {
             Item::Constant(_) => idx("CONSTANT"),
             Item::Static(_) => idx("STATIC"),
             Item::ForeignType => idx("FOREIGNTYPE"),
-            Item::Macro { name, meta, expr } => format!("MACRO_{name}"),
+            Item::Macro { name, .. } => format!("MACRO_{name}"),
             Item::ProcMacro(_) => idx("PROCMACRO"),
             Item::Primitive(_) => idx("PRIMITIVE"),
-            Item::AssocConst {
-                meta,
-                type_,
-                default,
-            } => idx("ASSOC_CONST"),
-            Item::AssocType {
-                meta,
-                generics,
-                bounds,
-                default,
-            } => idx("ASSOC_TYPE"),
+            Item::AssocConst { .. } => idx("ASSOC_CONST"),
+            Item::AssocType { .. } => idx("ASSOC_TYPE"),
         }
     }
 }
 
 impl ItemMeta {
-    pub(crate) fn get_formatted_path(&self) -> TokenStream {
-        let summary = self.summary.as_ref().unwrap();
-        let first: Option<&str> = summary.path.first().map(|t| t.as_str());
-        let is_crate = first.unwrap_or_default() == "crate";
+    // pub(crate) fn get_formatted_path(&self) -> TokenStream {
+    //     let summary = self.summary.as_ref().unwrap();
+    //     let first: Option<&str> = summary.path.first().map(|t| t.as_str());
+    //     let is_crate = first.unwrap_or_default() == "crate";
 
-        let paths = summary
-            .path
-            .iter()
-            .map(|segment| format_ident!("{}", segment));
+    //     let paths = summary
+    //         .path
+    //         .iter()
+    //         .map(|segment| format_ident!("{}", segment));
 
-        if is_crate {
-            quote::quote!(#(#paths)::*)
-        } else {
-            quote::quote!(::#(#paths)::*)
-        }
-    }
+    //     if is_crate {
+    //         quote::quote!(#(#paths)::*)
+    //     } else {
+    //         quote::quote!(::#(#paths)::*)
+    //     }
+    // }
 }
 impl Crate {
     pub fn generate_static(&self) -> TokenStream {
         let name = &self.root.name;
         let uppercase_name = format_ident!("{}", name.to_screaming_snake_case());
-        let lowercase_name = format_ident!("{}", name.to_snake_case());
+        let _lowercase_name = format_ident!("{}", name.to_snake_case());
 
         // let mut items = vec![];
 

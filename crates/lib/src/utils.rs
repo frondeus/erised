@@ -35,34 +35,25 @@ impl Item {
     pub fn meta(&self) -> &ItemMeta {
         match self {
             Item::Module(v) => &v.meta,
-            Item::ExternCrate { meta, name, rename } => meta,
+            Item::ExternCrate { meta, .. } => meta,
             Item::Import(v) => &v.meta,
-            Item::Union(v) => todo!(),
+            Item::Union(_v) => todo!(),
             Item::Struct(v) => &v.meta,
             Item::Enum(v) => &v.meta,
             Item::Function(v) => &v.meta,
             Item::Trait(v) => &v.meta,
-            Item::TraitAlias(v) => todo!(),
+            Item::TraitAlias(_v) => todo!(),
             Item::Impl(v) => &v.meta,
             Item::Typedef(v) => &v.meta,
             Item::OpaqueTy(v) => &v.meta,
             Item::Constant(v) => &v.meta,
             Item::Static(v) => &v.meta,
             Item::ForeignType => todo!(),
-            Item::Macro { name, meta, expr } => meta,
-            Item::ProcMacro(v) => todo!(),
-            Item::Primitive(v) => todo!(),
-            Item::AssocConst {
-                meta,
-                type_,
-                default,
-            } => meta,
-            Item::AssocType {
-                meta,
-                generics,
-                bounds,
-                default,
-            } => meta,
+            Item::Macro { meta, .. } => meta,
+            Item::ProcMacro(_v) => todo!(),
+            Item::Primitive(_v) => todo!(),
+            Item::AssocConst { meta, .. } => meta,
+            Item::AssocType { meta, .. } => meta,
         }
     }
 }

@@ -22,7 +22,7 @@ pub trait Visitor {
     fn visit_item(&mut self, item: &Item) {
         visit_item(self, item);
     }
-    fn visit_extern_crate(&mut self, meta: &ItemMeta, name: &String, rename: Option<&String>) {
+    fn visit_extern_crate(&mut self, meta: &ItemMeta, name: &str, rename: Option<&str>) {
         visit_extern_crate(self, meta, name, rename);
     }
     fn visit_import(&mut self, imp: &Import) {
@@ -64,7 +64,7 @@ pub trait Visitor {
     fn visit_foreign_type(&mut self) {
         visit_foreign_type(self)
     }
-    fn visit_macro(&mut self, name: &String, meta: &ItemMeta, expr: &String) {
+    fn visit_macro(&mut self, name: &str, meta: &ItemMeta, expr: &str) {
         visit_macro(self, name, meta, expr)
     }
     fn visit_proc_macro(&mut self, p: &ProcMacro) {
@@ -73,7 +73,7 @@ pub trait Visitor {
     fn visit_primitive_item(&mut self, p: &Primitive) {
         visit_primitive_item(self, p)
     }
-    fn visit_assoc_const(&mut self, meta: &ItemMeta, type_: &Type, default: Option<&String>) {
+    fn visit_assoc_const(&mut self, meta: &ItemMeta, type_: &Type, default: Option<&str>) {
         visit_assoc_const(self, meta, type_, default)
     }
     fn visit_assoc_type(
@@ -112,7 +112,7 @@ pub trait Visitor {
     fn visit_tuple(&mut self, t: &[Type]) {
         visit_tuple(self, t)
     }
-    fn visit_array(&mut self, type_: &Type, len: &String) {
+    fn visit_array(&mut self, type_: &Type, len: &str) {
         visit_array(self, type_, len)
     }
     fn visit_impl_trait(&mut self, i: &[GenericBound]) {
@@ -121,13 +121,13 @@ pub trait Visitor {
     fn visit_raw_pointer(&mut self, mutable: bool, type_: &Type) {
         visit_raw_pointer(self, mutable, type_)
     }
-    fn visit_borrowed_ref(&mut self, lifetime: Option<&String>, mutable: bool, type_: &Type) {
+    fn visit_borrowed_ref(&mut self, lifetime: Option<&str>, mutable: bool, type_: &Type) {
         visit_borrowed_ref(self, lifetime, mutable, type_)
     }
     fn visit_qualified_path(
         &mut self,
 
-        name: &String,
+        name: &str,
         args: &GenericArgs,
         self_type: &Type,
         trait_: &Path,
@@ -198,7 +198,7 @@ pub fn visit_item(vis: &mut (impl Visitor + ?Sized), item: &Item) {
     match item {
         Item::Module(m) => vis.visit_module(m),
         Item::ExternCrate { meta, name, rename } => {
-            vis.visit_extern_crate(meta, name, rename.as_ref())
+            vis.visit_extern_crate(meta, name, rename.as_deref())
         }
         Item::Import(i) => vis.visit_import(i),
         Item::Union(u) => vis.visit_union(u),
@@ -220,22 +220,22 @@ pub fn visit_item(vis: &mut (impl Visitor + ?Sized), item: &Item) {
             meta,
             type_,
             default,
-        } => vis.visit_assoc_const(meta, type_, default.as_ref()),
+        } => vis.visit_assoc_const(meta, type_, default.as_deref()),
         Item::AssocType {
             meta,
             generics,
             bounds,
             default,
-        } => vis.visit_assoc_type(meta, generics, &bounds, default.as_ref()),
+        } => vis.visit_assoc_type(meta, generics, bounds, default.as_ref()),
     }
 }
 pub fn visit_extern_crate(
     vis: &mut (impl Visitor + ?Sized),
     meta: &ItemMeta,
-    name: &String,
-    rename: Option<&String>,
+    _name: &str,
+    _rename: Option<&str>,
 ) {
-    // Nothing to do here
+    vis.visit_item_meta(meta);
 }
 pub fn visit_import(vis: &mut (impl Visitor + ?Sized), imp: &Import) {
     vis.visit_item_meta(&imp.meta);
@@ -243,7 +243,7 @@ pub fn visit_import(vis: &mut (impl Visitor + ?Sized), imp: &Import) {
         vis.visit_identifiable(target);
     }
 }
-pub fn visit_union(vis: &mut (impl Visitor + ?Sized), u: &Union) {
+pub fn visit_union(_vis: &mut (impl Visitor + ?Sized), _u: &Union) {
     todo!()
 }
 pub fn visit_struct(vis: &mut (impl Visitor + ?Sized), s: &Struct) {
@@ -324,7 +324,7 @@ pub fn visit_trait(vis: &mut (impl Visitor + ?Sized), t: &Trait) {
         vis.visit_identifiable(imp);
     }
 }
-pub fn visit_trait_alias(vis: &mut (impl Visitor + ?Sized), t: &TraitAlias) {
+pub fn visit_trait_alias(_vis: &mut (impl Visitor + ?Sized), _t: &TraitAlias) {
     todo!()
 }
 pub fn visit_impl(vis: &mut (impl Visitor + ?Sized), i: &Impl) {
@@ -348,37 +348,32 @@ pub fn visit_typedef(vis: &mut (impl Visitor + ?Sized), t: &Typedef) {
     vis.visit_type(&t.type_);
     vis.visit_generics(&t.generics);
 }
-pub fn visit_opaque_type(vis: &mut (impl Visitor + ?Sized), o: &OpaqueTy) {
+pub fn visit_opaque_type(_vis: &mut (impl Visitor + ?Sized), _o: &OpaqueTy) {
     todo!()
 }
-pub fn visit_constant_item(vis: &mut (impl Visitor + ?Sized), c: &ConstantItem) {
+pub fn visit_constant_item(_vis: &mut (impl Visitor + ?Sized), _c: &ConstantItem) {
     todo!()
 }
-pub fn visit_static(vis: &mut (impl Visitor + ?Sized), s: &Static) {
+pub fn visit_static(_vis: &mut (impl Visitor + ?Sized), _s: &Static) {
     todo!()
 }
-pub fn visit_foreign_type(vis: &mut (impl Visitor + ?Sized)) {
+pub fn visit_foreign_type(_vis: &mut (impl Visitor + ?Sized)) {
     todo!()
 }
-pub fn visit_macro(
-    vis: &mut (impl Visitor + ?Sized),
-    name: &String,
-    meta: &ItemMeta,
-    expr: &String,
-) {
+pub fn visit_macro(vis: &mut (impl Visitor + ?Sized), _name: &str, meta: &ItemMeta, _expr: &str) {
+    vis.visit_item_meta(meta);
+}
+pub fn visit_proc_macro(_vis: &mut (impl Visitor + ?Sized), _p: &ProcMacro) {
     todo!()
 }
-pub fn visit_proc_macro(vis: &mut (impl Visitor + ?Sized), p: &ProcMacro) {
-    todo!()
-}
-pub fn visit_primitive_item(vis: &mut (impl Visitor + ?Sized), p: &Primitive) {
+pub fn visit_primitive_item(_vis: &mut (impl Visitor + ?Sized), _p: &Primitive) {
     todo!()
 }
 pub fn visit_assoc_const(
-    vis: &mut (impl Visitor + ?Sized),
-    meta: &ItemMeta,
-    type_: &Type,
-    default: Option<&String>,
+    _vis: &mut (impl Visitor + ?Sized),
+    _meta: &ItemMeta,
+    _type_: &Type,
+    _default: Option<&str>,
 ) {
     todo!()
 }
@@ -401,10 +396,10 @@ pub fn visit_assoc_type(
 
 pub fn visit_generics(vis: &mut (impl Visitor + ?Sized), generics: &Generics) {
     for param in &generics.params {
-        vis.visit_generic_param_def(&param);
+        vis.visit_generic_param_def(param);
     }
     for predicate in &generics.where_predicates {
-        vis.visit_where_predicate(&predicate);
+        vis.visit_where_predicate(predicate);
     }
 }
 pub fn visit_generic_param_def(
@@ -459,11 +454,11 @@ pub fn visit_where_predicate(vis: &mut (impl Visitor + ?Sized), where_predicate:
 }
 pub fn visit_type(vis: &mut (impl Visitor + ?Sized), ty: &Type) {
     match ty {
-        Type::ResolvedPath(rp) => vis.visit_resolved_path(&rp),
+        Type::ResolvedPath(rp) => vis.visit_resolved_path(rp),
         Type::DynTrait(d) => vis.visit_dyn_trait(d),
         Type::Generic(_) => (),
         Type::Primitive(_) => (),
-        Type::FunctionPointer(f) => vis.visit_function_pointer(&f),
+        Type::FunctionPointer(f) => vis.visit_function_pointer(f),
         Type::Tuple(t) => vis.visit_tuple(t),
         Type::Slice(ty) => vis.visit_type(ty),
         Type::Array { type_, len } => vis.visit_array(type_, len),
@@ -474,7 +469,7 @@ pub fn visit_type(vis: &mut (impl Visitor + ?Sized), ty: &Type) {
             lifetime,
             mutable,
             type_,
-        } => vis.visit_borrowed_ref(lifetime.as_ref(), *mutable, type_),
+        } => vis.visit_borrowed_ref(lifetime.as_deref(), *mutable, type_),
         Type::QualifiedPath {
             name,
             args,
@@ -516,13 +511,13 @@ fn visit_function_decl(vis: &mut (impl Visitor + ?Sized), decl: &FnDecl) {
 fn visit_function_input(vis: &mut (impl Visitor + ?Sized), input: &FnInput) {
     vis.visit_type(&input.ty);
 }
-fn visit_function_header(vis: &mut (impl Visitor + ?Sized), _header: &Header) {}
+fn visit_function_header(_vis: &mut (impl Visitor + ?Sized), _header: &Header) {}
 fn visit_tuple(vis: &mut (impl Visitor + ?Sized), t: &[Type]) {
     for t in t {
         vis.visit_type(t);
     }
 }
-fn visit_array(vis: &mut (impl Visitor + ?Sized), type_: &Type, len: &String) {
+fn visit_array(_vis: &mut (impl Visitor + ?Sized), _type_: &Type, _len: &str) {
     todo!()
 }
 fn visit_impl_trait(vis: &mut (impl Visitor + ?Sized), bounds: &[GenericBound]) {
@@ -531,14 +526,14 @@ fn visit_impl_trait(vis: &mut (impl Visitor + ?Sized), bounds: &[GenericBound]) 
     }
 }
 
-fn visit_raw_pointer(vis: &mut (impl Visitor + ?Sized), mutable: bool, type_: &Type) {
+fn visit_raw_pointer(_vis: &mut (impl Visitor + ?Sized), _mutable: bool, _type_: &Type) {
     todo!()
 }
 fn visit_borrowed_ref(
     vis: &mut (impl Visitor + ?Sized),
 
-    lifetime: Option<&String>,
-    mutable: bool,
+    _lifetime: Option<&str>,
+    _mutable: bool,
     type_: &Type,
 ) {
     vis.visit_type(type_);
@@ -546,7 +541,7 @@ fn visit_borrowed_ref(
 fn visit_qualified_path(
     vis: &mut (impl Visitor + ?Sized),
 
-    name: &String,
+    _name: &str,
     args: &GenericArgs,
     self_type: &Type,
     trait_: &Path,
@@ -584,7 +579,7 @@ fn visit_generic_arg(vis: &mut (impl Visitor + ?Sized), arg: &GenericArg) {
         GenericArg::Infer => (),
     }
 }
-fn visit_type_binding(vis: &mut (impl Visitor + ?Sized), binding: &TypeBinding) {
+fn visit_type_binding(_vis: &mut (impl Visitor + ?Sized), _binding: &TypeBinding) {
     todo!()
 }
 fn visit_constant(vis: &mut (impl Visitor + ?Sized), con: &Constant) {

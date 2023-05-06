@@ -1,5 +1,5 @@
 use error_stack::{IntoReport, Result, ResultExt};
-use std::{io::Write, path::PathBuf};
+use std::path::PathBuf;
 use thiserror::Error;
 
 use clap::{Args, Parser};

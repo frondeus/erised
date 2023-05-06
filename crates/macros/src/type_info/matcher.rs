@@ -88,29 +88,4 @@ impl TokenMatcher {
         }
         new
     }
-
-    pub fn is_destruct(&self, stream: TokenStream) -> bool {
-        let idents = &["Option", "Vec", "PathBuf", "HashMap", "Arc", "Weak", "Box"];
-
-        let buf = TokenBuffer::new2(stream);
-        let cursor = buf.begin();
-        let tree = match cursor.token_tree() {
-            Some((tree, _)) => tree,
-            None => return false,
-        };
-        match tree {
-            TokenTree::Group(group) => matches!(group.delimiter(), Delimiter::Parenthesis),
-            TokenTree::Ident(ident) => {
-                idents.contains(&ident.to_string().as_str())
-                // ident == "Option" || ident == "Vec",
-            }
-            TokenTree::Punct(_) => false,
-            TokenTree::Literal(_) => false,
-        }
-        // if let Some((TokenTree::Ident(ident), _)) = cursor.token_tree() {
-        //     ident == "Option" || ident == "Vec"
-        // } else {
-        //     false
-        // }
-    }
 }
