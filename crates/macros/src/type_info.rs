@@ -18,6 +18,9 @@ mod matcher;
 pub struct TypeInfo {
     ident: Ident,
     data: ast::Data<TypeInfoVariant, TypeInfoField>,
+
+    #[darling(default, rename = "skip")]
+    _skip: bool,
 }
 
 impl TypeInfo {

@@ -1,5 +1,6 @@
 use std::{collections::HashSet, path::PathBuf};
 
+use erised::heap_types::{Item, ItemMeta};
 use erised::{builder::BuilderOpts, visitor::Visitor};
 
 #[derive(Default)]
@@ -8,14 +9,14 @@ struct MyVisitor {
 }
 
 impl Visitor for MyVisitor {
-    fn visit_item_meta(&mut self, meta: &erised_tests::ItemMeta) {
+    fn visit_item_meta(&mut self, meta: &ItemMeta) {
         if let Some(summary) = meta.summary.as_ref() {
             let path = summary.path.join("::");
             println!("Visited: {path}");
         }
     }
 
-    fn visit_item(&mut self, item: &erised_tests::Item) {
+    fn visit_item(&mut self, item: &Item) {
         // Because there are cycles in the graph we want to make sure we won't run out of the stack.
         let id = &item.meta().id;
         if self.visited.get(id).is_some() {

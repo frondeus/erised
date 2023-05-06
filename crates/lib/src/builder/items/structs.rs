@@ -72,8 +72,14 @@ impl Builder {
                     rustdoc_types::ItemEnum::StructField(ty) => ty,
                     t => panic!("Expected struct field, found {t:?}"),
                 };
+                let name = item.name.as_ref().unwrap().clone();
+
+                // JSON output returns a number when the field is a part of tuple.
+                let is_part_of_tuple = name.parse::<i64>().is_ok();
+
                 Ok(StructField {
-                    name: item.name.clone(),
+                    name,
+                    is_part_of_tuple,
                     meta: self.build_item_meta(cache, item)?,
                     ty: self.build_type(cache, ty)?,
                 })

@@ -1,0 +1,19 @@
+[package]
+name = "erised-codegen"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+# Workspace
+erised= { path = "../lib" }
+
+# Crates.io
+anyhow = "1.0.71"
+clap = { version = "4.2.5", features = ["derive", "env"] }
+error-stack = "0.3.1"
+thiserror = "1.0.40"
+quote = "1.0.26"
+proc-macro2 = "1.0.56"
+Inflector = "0.11.4"

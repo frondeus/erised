@@ -1,5 +1,7 @@
 use crate::heap_types::*;
 
+pub use crate::utils::CycleDetector;
+
 pub trait Visitor {
     fn visit_crate(&mut self, krate: &Crate) {
         visit_crate(self, krate);
@@ -351,8 +353,9 @@ pub fn visit_typedef(vis: &mut (impl Visitor + ?Sized), t: &Typedef) {
 pub fn visit_opaque_type(_vis: &mut (impl Visitor + ?Sized), _o: &OpaqueTy) {
     todo!()
 }
-pub fn visit_constant_item(_vis: &mut (impl Visitor + ?Sized), _c: &ConstantItem) {
-    todo!()
+pub fn visit_constant_item(vis: &mut (impl Visitor + ?Sized), c: &ConstantItem) {
+    vis.visit_item_meta(&c.meta);
+    vis.visit_constant(&c.constant);
 }
 pub fn visit_static(_vis: &mut (impl Visitor + ?Sized), _s: &Static) {
     todo!()
@@ -479,13 +482,13 @@ pub fn visit_type(vis: &mut (impl Visitor + ?Sized), ty: &Type) {
     }
 }
 
-fn visit_resolved_path(vis: &mut (impl Visitor + ?Sized), r: &Path) {
+pub fn visit_resolved_path(vis: &mut (impl Visitor + ?Sized), r: &Path) {
     vis.visit_identifiable(&r.target);
     if let Some(args) = r.args.as_ref() {
         vis.visit_generic_args(args);
     }
 }
-fn visit_dyn_trait(vis: &mut (impl Visitor + ?Sized), d: &DynTrait) {
+pub fn visit_dyn_trait(vis: &mut (impl Visitor + ?Sized), d: &DynTrait) {
     for trait_ in &d.traits {
         vis.visit_resolved_path(&trait_.trait_);
         for param in &trait_.generic_params {
@@ -493,14 +496,14 @@ fn visit_dyn_trait(vis: &mut (impl Visitor + ?Sized), d: &DynTrait) {
         }
     }
 }
-fn visit_function_pointer(vis: &mut (impl Visitor + ?Sized), f: &FunctionPointer) {
+pub fn visit_function_pointer(vis: &mut (impl Visitor + ?Sized), f: &FunctionPointer) {
     vis.visit_function_decl(&f.decl);
     for param in &f.generic_params {
         vis.visit_generic_param_def(param);
     }
     vis.visit_function_header(&f.header);
 }
-fn visit_function_decl(vis: &mut (impl Visitor + ?Sized), decl: &FnDecl) {
+pub fn visit_function_decl(vis: &mut (impl Visitor + ?Sized), decl: &FnDecl) {
     for input in &decl.inputs {
         vis.visit_function_input(input);
     }
@@ -508,28 +511,28 @@ fn visit_function_decl(vis: &mut (impl Visitor + ?Sized), decl: &FnDecl) {
         vis.visit_type(opt);
     }
 }
-fn visit_function_input(vis: &mut (impl Visitor + ?Sized), input: &FnInput) {
+pub fn visit_function_input(vis: &mut (impl Visitor + ?Sized), input: &FnInput) {
     vis.visit_type(&input.ty);
 }
-fn visit_function_header(_vis: &mut (impl Visitor + ?Sized), _header: &Header) {}
-fn visit_tuple(vis: &mut (impl Visitor + ?Sized), t: &[Type]) {
+pub fn visit_function_header(_vis: &mut (impl Visitor + ?Sized), _header: &Header) {}
+pub fn visit_tuple(vis: &mut (impl Visitor + ?Sized), t: &[Type]) {
     for t in t {
         vis.visit_type(t);
     }
 }
-fn visit_array(_vis: &mut (impl Visitor + ?Sized), _type_: &Type, _len: &str) {
+pub fn visit_array(_vis: &mut (impl Visitor + ?Sized), _type_: &Type, _len: &str) {
     todo!()
 }
-fn visit_impl_trait(vis: &mut (impl Visitor + ?Sized), bounds: &[GenericBound]) {
+pub fn visit_impl_trait(vis: &mut (impl Visitor + ?Sized), bounds: &[GenericBound]) {
     for bound in bounds {
         vis.visit_generic_bound(bound);
     }
 }
 
-fn visit_raw_pointer(_vis: &mut (impl Visitor + ?Sized), _mutable: bool, _type_: &Type) {
+pub fn visit_raw_pointer(_vis: &mut (impl Visitor + ?Sized), _mutable: bool, _type_: &Type) {
     todo!()
 }
-fn visit_borrowed_ref(
+pub fn visit_borrowed_ref(
     vis: &mut (impl Visitor + ?Sized),
 
     _lifetime: Option<&str>,
@@ -538,7 +541,7 @@ fn visit_borrowed_ref(
 ) {
     vis.visit_type(type_);
 }
-fn visit_qualified_path(
+pub fn visit_qualified_path(
     vis: &mut (impl Visitor + ?Sized),
 
     _name: &str,
@@ -551,7 +554,7 @@ fn visit_qualified_path(
     vis.visit_resolved_path(trait_);
 }
 
-fn visit_generic_args(vis: &mut (impl Visitor + ?Sized), args: &GenericArgs) {
+pub fn visit_generic_args(vis: &mut (impl Visitor + ?Sized), args: &GenericArgs) {
     match args {
         GenericArgs::AngleBracketed { args, bindings } => {
             for arg in args {
@@ -571,7 +574,7 @@ fn visit_generic_args(vis: &mut (impl Visitor + ?Sized), args: &GenericArgs) {
         }
     }
 }
-fn visit_generic_arg(vis: &mut (impl Visitor + ?Sized), arg: &GenericArg) {
+pub fn visit_generic_arg(vis: &mut (impl Visitor + ?Sized), arg: &GenericArg) {
     match arg {
         GenericArg::Lifetime(_) => (),
         GenericArg::Type(ty) => vis.visit_type(ty),
@@ -579,13 +582,13 @@ fn visit_generic_arg(vis: &mut (impl Visitor + ?Sized), arg: &GenericArg) {
         GenericArg::Infer => (),
     }
 }
-fn visit_type_binding(_vis: &mut (impl Visitor + ?Sized), _binding: &TypeBinding) {
+pub fn visit_type_binding(_vis: &mut (impl Visitor + ?Sized), _binding: &TypeBinding) {
     todo!()
 }
-fn visit_constant(vis: &mut (impl Visitor + ?Sized), con: &Constant) {
+pub fn visit_constant(vis: &mut (impl Visitor + ?Sized), con: &Constant) {
     vis.visit_type(&con.type_);
 }
-fn visit_generic_bound(vis: &mut (impl Visitor + ?Sized), bound: &GenericBound) {
+pub fn visit_generic_bound(vis: &mut (impl Visitor + ?Sized), bound: &GenericBound) {
     match bound {
         GenericBound::TraitBound {
             trait_,

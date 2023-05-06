@@ -54,8 +54,9 @@ pub struct ItemSummary {
     pub kind: ItemKind,
 }
 
-/// This struct should not be really used for anything else than to quickly match if two Weak<Item> points to the same item.
+/// This struct should not be really used for anything else than to quickly match if two `Weak<Item` points to the same item.
 #[derive(Debug, Clone, TypeInfo, Eq, Hash, PartialEq)]
+#[type_info(skip)]
 pub struct Id(pub(crate) String);
 
 #[derive(Debug, Clone, TypeInfo)]
@@ -354,7 +355,8 @@ pub enum StructKind {
 
 #[derive(Debug, Clone, TypeInfo)]
 pub struct StructField {
-    pub name: Option<String>,
+    pub name: String,
+    pub is_part_of_tuple: bool,
     pub meta: ItemMeta,
     pub ty: Type,
 }

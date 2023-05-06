@@ -221,7 +221,7 @@ impl Builder {
         let item = self.get_item(cache, id);
         match item {
             Ok(item) => Ok(Identifiable::Item(item)),
-            Err(Error::CouldNotFind(_)) => {
+            Err(Error::CouldNotFind(missing_id)) if &missing_id == id => {
                 let summary = self.get_item_summary(cache, id)?;
                 Ok(Identifiable::Summary(summary))
             }

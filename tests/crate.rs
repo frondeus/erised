@@ -15,7 +15,6 @@ fn erised() {
         .build()
         .expect("Rust info");
 
-    dbg!(&krate);
     let info = krate.generate_static();
 
     let info = pretty_print(info).expect("formatted");
@@ -35,7 +34,6 @@ fn erised_tests() {
         .build()
         .expect("Rust info");
 
-    dbg!(&krate);
     let info = krate.generate_static();
 
     let info = pretty_print(info).expect("formatted");

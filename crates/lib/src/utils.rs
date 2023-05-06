@@ -1,8 +1,28 @@
+use std::collections::HashSet;
 use std::sync::Arc;
 use std::sync::Weak;
 
+use crate::codegen_input::GenericArgs;
 use crate::heap_types::Item;
 use crate::heap_types::ItemMeta;
+
+#[derive(Default, Clone)]
+pub struct CycleDetector {
+    visited: HashSet<crate::heap_types::Id>,
+}
+
+impl CycleDetector {
+    pub fn was_visited(&mut self, item: &Item) -> bool {
+        // Because there are cycles in the graph we want to make sure we won't run out of the stack.
+        let id = &item.meta().id;
+        if self.visited.get(id).is_some() {
+            return true;
+        }
+
+        self.visited.insert(id.clone());
+        false
+    }
+}
 
 pub trait ArcExt<T>: Sized {
     fn create_cyclic<F, E>(func: F) -> Result<Self, E>
@@ -54,6 +74,17 @@ impl Item {
             Item::Primitive(_v) => todo!(),
             Item::AssocConst { meta, .. } => meta,
             Item::AssocType { meta, .. } => meta,
+        }
+    }
+}
+
+impl GenericArgs {
+    pub fn is_empty(&self) -> bool {
+        match self {
+            GenericArgs::AngleBracketed { args, bindings } => {
+                args.is_empty() && bindings.is_empty()
+            }
+            GenericArgs::Parenthesized { .. } => false, //inputs.is_empty() && output,
         }
     }
 }
