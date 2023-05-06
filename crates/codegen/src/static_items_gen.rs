@@ -89,8 +89,6 @@ impl Visitor for StaticItemsGenerator {
         });
 
         let as_variant = self.branch(|codegen| {
-            
-
             for variant in &e.variants {
                 let variant_name = format_ident!("{}", variant.name);
                 let fn_name = format_ident!("as_{}", variant.name.to_snake_case());
@@ -234,7 +232,7 @@ impl Visitor for StaticItemsGenerator {
         }
 
         impl #static_name {
-            #as_variant       
+            #as_variant
         }
         );
     }
@@ -249,7 +247,7 @@ impl Visitor for StaticItemsGenerator {
             return;
         }
         let static_name = format_ident!("{name}");
-        quote!(self.output, 
+        quote!(self.output,
             #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
             pub struct #static_name);
 
@@ -609,5 +607,5 @@ impl<'a> Visitor for Typper<'a> {
             } => todo!(),
         }
         self.trailing_comma();
-        }
+    }
 }
