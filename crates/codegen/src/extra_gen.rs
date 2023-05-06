@@ -42,7 +42,7 @@ impl Visitor for ExtraGenerator {
     fn visit_enum(&mut self, e: &Enum) {
         let name = &e.name;
         // Let's check if the enum has been codegenerated
-        if name.starts_with("Static") {
+        if name.starts_with("Static") && name != "Static" {
             return;
         }
         if e.meta.attrs.contains(&"#[type_info(skip)]".to_owned()) {

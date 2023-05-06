@@ -41,7 +41,7 @@ impl Visitor for ToTokensGenerator {
     fn visit_enum(&mut self, e: &Enum) {
         let name = &e.name;
         // Let's check if the enum has been codegenerated
-        if name.starts_with("Static") {
+        if name.starts_with("Static") && name != "Static" {
             return;
         }
         if e.meta.attrs.contains(&"#[type_info(skip)]".to_owned()) {
@@ -172,7 +172,7 @@ impl Visitor for ToTokensGenerator {
     fn visit_struct(&mut self, strukt: &Struct) {
         let name = &strukt.name;
         // Let's check if the struct has been codegenerated
-        if name.starts_with("Static") {
+        if name.starts_with("Static") && name != "Static" {
             return;
         }
         if strukt.meta.attrs.contains(&"#[type_info(skip)]".to_owned()) {
