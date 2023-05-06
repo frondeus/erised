@@ -51,7 +51,7 @@ impl Visitor for ToTokensGenerator {
         let inner = self.branch(|codegen| {
             for variant in &e.variants {
                 let variant_name = format_ident!("{}", &variant.name);
-                quote!(codegen.output, #variant_name);
+                quote!(codegen.output, Self::#variant_name);
 
                 match &variant.kind {
                     VariantKind::Plain => {
