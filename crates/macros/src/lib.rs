@@ -9,7 +9,9 @@ pub fn type_info(item: TokenStream) -> TokenStream {
     let type_info = TypeInfo::from_derive_input(&syn::parse_macro_input!(item));
     let type_info = match type_info {
         Err(e) => e.write_errors(),
-        Ok(t) => t.gen(),
+        // Currently macros are disabled because were replaced by codegen pass.
+        // We still invoke them because we use `#[type_info()]` attribute to control codegen :)
+        Ok(_) => Default::default(),
     };
     // println!("{}", type_info.to_string());
     TokenStream::from(type_info)
