@@ -178,7 +178,7 @@ impl Visitor for ExtraGenerator {
                 quote!(codegen.output,
                     pub fn #fn_name(&self) -> Option<#ty> {
                         match self {
-                            #variant_name #destruct => Some(#construct),
+                            Self::#variant_name #destruct => Some(#construct),
                             _ => None
                         }
                     }
