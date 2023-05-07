@@ -6,6 +6,7 @@ pub mod codegen_input;
 
 mod imp;
 pub mod types;
+pub mod visitor;
 
 // Manually implemented
 pub mod heap_types {
@@ -22,7 +23,7 @@ pub(crate) mod utils;
 
 pub mod build;
 
-pub mod visitor;
+// pub mod visitor;
 
 // Old types:
 

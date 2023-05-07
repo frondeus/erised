@@ -1,5 +1,4 @@
 #![allow(clippy::type_complexity, clippy::just_underscores_and_digits)]
-
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 pub struct Crate {
     pub root: fn() -> Module,

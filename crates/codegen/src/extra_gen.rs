@@ -314,7 +314,6 @@ impl<'a> Visitor for Typper<'a> {
                 Identifiable::Item(_) => {
                     let name = format_ident!("{}", path.name);
                     quote!(self.codegen.output, #name);
-                    dbg!(&path);
                 }
                 Identifiable::Summary(_) => {
                     let args = match &path.args {

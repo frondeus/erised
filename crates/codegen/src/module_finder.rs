@@ -5,7 +5,7 @@ use erised::{
 
 use crate::{
     extra_gen::ExtraGenerator, static_items_gen::StaticItemsGenerator,
-    to_tokens_gen::ToTokensGenerator,
+    to_tokens_gen::ToTokensGenerator, visitor::VisitorGenerator,
 };
 
 #[derive(Default)]
@@ -14,6 +14,7 @@ pub struct ModuleFinder {
     pub static_items: StaticItemsGenerator,
     pub to_tokens: ToTokensGenerator,
     pub extra: ExtraGenerator,
+    pub visitor: VisitorGenerator,
 }
 
 impl Visitor for ModuleFinder {
@@ -22,6 +23,7 @@ impl Visitor for ModuleFinder {
             self.static_items.visit_module(module);
             self.to_tokens.visit_module(module);
             self.extra.visit_module(module);
+            self.visitor.visit_module(module);
         } else {
             erised::visitor::visit_module(self, module);
         }

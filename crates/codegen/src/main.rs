@@ -7,11 +7,23 @@ use std::{
 use anyhow::Context;
 use erised::{builder::BuilderOpts, visitor::Visitor};
 use module_finder::ModuleFinder;
+use proc_macro2::TokenStream;
 
 mod extra_gen;
 mod module_finder;
 mod static_items_gen;
 mod to_tokens_gen;
+mod visitor;
+
+pub trait Generator: Visitor + Sized {
+    fn branch(&mut self, f: impl FnOnce(&mut Self)) -> TokenStream {
+        let saved = std::mem::take(self.output());
+        f(self);
+        std::mem::replace(self.output(), saved)
+    }
+
+    fn output(&mut self) -> &mut TokenStream;
+}
 
 fn main() -> anyhow::Result<()> {
     let manifest_dir = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap_or_default());
@@ -26,6 +38,19 @@ fn main() -> anyhow::Result<()> {
     let mut finder = ModuleFinder::default();
 
     finder.visit_crate(&krate);
+
+    let visitor = &finder.visitor.output;
+    let default = &finder.visitor.default.output;
+    // let default = "";
+    let full_visitor = pretty_print(quote::quote!(
+        use crate::heap_types::*;
+
+        pub trait Visitor {
+            #visitor
+        }
+
+        #default
+    ))?;
 
     let static_items = &finder.static_items.output;
     let static_items = pretty_print(quote::quote!(
@@ -54,6 +79,7 @@ fn main() -> anyhow::Result<()> {
 
     write_file("crates/lib/src/types.rs", &static_items)?;
     write_file("crates/lib/src/imp.rs", &imp)?;
+    write_file("crates/lib/src/new_visitor.rs", &full_visitor)?;
 
     Ok(())
 }
