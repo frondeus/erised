@@ -295,18 +295,6 @@ impl<'a> FieldVisitor<'a> {
             f(&mut field_visitor);
         })
     }
-    fn branch_with_comma<F>(&mut self, f: F) -> TokenStream
-    where
-        F: for<'b> FnOnce(&mut FieldVisitor<'b>),
-    {
-        self.codegen.branch(|codegen| {
-            let mut field_visitor = FieldVisitor {
-                codegen,
-                trailing_comma: true,
-            };
-            f(&mut field_visitor);
-        })
-    }
 
     fn trailing_comma(&mut self) {
         if self.trailing_comma {
@@ -394,7 +382,9 @@ impl<'a> Visitor for FieldVisitor<'a> {
             Type::FunctionPointer(_) => todo!(),
             Type::Tuple(t) => {
                 let inner = self.branch(|fv| {
+                    fv.trailing_comma = true;
                     for _0 in t {
+                        dbg!("tuple!");
                         fv.visit_type(_0);
                     }
                 });

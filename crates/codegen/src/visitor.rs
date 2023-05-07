@@ -274,6 +274,7 @@ impl<'a> DefaultFieldVisitorGenerator<'a> {
 }
 
 impl<'a> Visitor for DefaultFieldVisitorGenerator<'a> {
+    fn visit_item(&mut self, _item: &Item) {}
     fn visit_struct_field(&mut self, field: &StructField) {
         if field.meta.attrs.contains(&"#[type_info(skip)]".to_owned()) {
             return;
@@ -341,6 +342,7 @@ enum FieldKind {
 }
 
 impl Visitor for WorthinessChecker {
+    // fn visit_item(&mut self, _item: &Item) {}
     fn visit_path(&mut self, r: &Path) {
         if self.path.is_none() {
             if r.target.clone().as_item().is_some() {
