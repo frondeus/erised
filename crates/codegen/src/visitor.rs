@@ -341,7 +341,7 @@ enum FieldKind {
 }
 
 impl Visitor for WorthinessChecker {
-    fn visit_resolved_path(&mut self, r: &Path) {
+    fn visit_path(&mut self, r: &Path) {
         if self.path.is_none() {
             if r.target.clone().as_item().is_some() {
                 self.path = Some(r.clone());
@@ -353,7 +353,7 @@ impl Visitor for WorthinessChecker {
                 if r.name == "Option" {
                     self.kind = FieldKind::Optional;
                 }
-                return erised::visitor::visit_resolved_path(self, r);
+                return erised::visitor::visit_path(self, r);
             }
         }
     }

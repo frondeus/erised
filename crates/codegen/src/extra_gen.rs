@@ -345,7 +345,9 @@ impl<'a> Visitor for Typper<'a> {
             Type::FunctionPointer(_) => todo!(),
             Type::Tuple(t) => {
                 let inner = self.branch(|fv| {
-                    erised::visitor::visit_tuple(fv, t);
+                    for _0 in t {
+                        fv.visit_type(_0);
+                    }
                 });
                 quote!(self.codegen.output, ( #inner ));
             }
