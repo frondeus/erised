@@ -12,6 +12,9 @@ pub struct CycleDetector {
 }
 
 impl CycleDetector {
+    pub fn add_id(&mut self, id: crate::heap_types::Id) {
+        self.visited.insert(id);
+    }
     pub fn was_visited(&mut self, item: &Item) -> bool {
         // Because there are cycles in the graph we want to make sure we won't run out of the stack.
         let id = &item.meta().id;
