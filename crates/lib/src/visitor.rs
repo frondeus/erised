@@ -1,5 +1,148 @@
+#![allow(clippy::single_match, unused_variables, unreachable_patterns)]
 use crate::heap_types::*;
 pub use crate::utils::CycleDetector;
+pub trait Visitor {
+    fn visit_crate(&mut self, krate: &Crate) {
+        visit_crate(self, krate)
+    }
+    fn visit_identifiable(&mut self, identifiable: &Identifiable) {
+        visit_identifiable(self, identifiable)
+    }
+    fn visit_external_crate(&mut self, external_crate: &ExternalCrate) {}
+    fn visit_item_summary(&mut self, item_summary: &ItemSummary) {
+        visit_item_summary(self, item_summary)
+    }
+    fn visit_item_meta(&mut self, item_meta: &ItemMeta) {
+        visit_item_meta(self, item_meta)
+    }
+    fn visit_span(&mut self, span: &Span) {}
+    fn visit_deprecation(&mut self, deprecation: &Deprecation) {}
+    fn visit_visibility(&mut self, visibility: &Visibility) {
+        visit_visibility(self, visibility)
+    }
+    fn visit_dyn_trait(&mut self, dyn_trait: &DynTrait) {
+        visit_dyn_trait(self, dyn_trait)
+    }
+    fn visit_poly_trait(&mut self, poly_trait: &PolyTrait) {
+        visit_poly_trait(self, poly_trait)
+    }
+    fn visit_generic_args(&mut self, generic_args: &GenericArgs) {
+        visit_generic_args(self, generic_args)
+    }
+    fn visit_generic_arg(&mut self, generic_arg: &GenericArg) {
+        visit_generic_arg(self, generic_arg)
+    }
+    fn visit_constant_item(&mut self, constant_item: &ConstantItem) {
+        visit_constant_item(self, constant_item)
+    }
+    fn visit_constant(&mut self, constant: &Constant) {
+        visit_constant(self, constant)
+    }
+    fn visit_type_binding(&mut self, type_binding: &TypeBinding) {
+        visit_type_binding(self, type_binding)
+    }
+    fn visit_type_binding_kind(&mut self, type_binding_kind: &TypeBindingKind) {
+        visit_type_binding_kind(self, type_binding_kind)
+    }
+    fn visit_item_kind(&mut self, item_kind: &ItemKind) {}
+    fn visit_item(&mut self, item: &Item) {
+        visit_item(self, item)
+    }
+    fn visit_module(&mut self, module: &Module) {
+        visit_module(self, module)
+    }
+    fn visit_union(&mut self, union: &Union) {
+        visit_union(self, union)
+    }
+    fn visit_struct(&mut self, struct_: &Struct) {
+        visit_struct(self, struct_)
+    }
+    fn visit_struct_kind(&mut self, struct_kind: &StructKind) {
+        visit_struct_kind(self, struct_kind)
+    }
+    fn visit_struct_field(&mut self, struct_field: &StructField) {
+        visit_struct_field(self, struct_field)
+    }
+    fn visit_enum(&mut self, enum_: &Enum) {
+        visit_enum(self, enum_)
+    }
+    fn visit_variant(&mut self, variant: &Variant) {
+        visit_variant(self, variant)
+    }
+    fn visit_variant_kind(&mut self, variant_kind: &VariantKind) {
+        visit_variant_kind(self, variant_kind)
+    }
+    fn visit_discriminant(&mut self, discriminant: &Discriminant) {}
+    fn visit_header(&mut self, header: &Header) {
+        visit_header(self, header)
+    }
+    fn visit_abi(&mut self, abi: &Abi) {}
+    fn visit_function(&mut self, function: &Function) {
+        visit_function(self, function)
+    }
+    fn visit_generics(&mut self, generics: &Generics) {
+        visit_generics(self, generics)
+    }
+    fn visit_generic_param_def(&mut self, generic_param_def: &GenericParamDef) {
+        visit_generic_param_def(self, generic_param_def)
+    }
+    fn visit_generic_param_def_kind(&mut self, generic_param_def_kind: &GenericParamDefKind) {
+        visit_generic_param_def_kind(self, generic_param_def_kind)
+    }
+    fn visit_where_predicate(&mut self, where_predicate: &WherePredicate) {
+        visit_where_predicate(self, where_predicate)
+    }
+    fn visit_generic_bound(&mut self, generic_bound: &GenericBound) {
+        visit_generic_bound(self, generic_bound)
+    }
+    fn visit_trait_bound_modifier(&mut self, trait_bound_modifier: &TraitBoundModifier) {}
+    fn visit_term(&mut self, term: &Term) {
+        visit_term(self, term)
+    }
+    fn visit_type(&mut self, ty: &Type) {
+        visit_type(self, ty)
+    }
+    fn visit_path(&mut self, path: &Path) {
+        visit_path(self, path)
+    }
+    fn visit_function_pointer(&mut self, function_pointer: &FunctionPointer) {
+        visit_function_pointer(self, function_pointer)
+    }
+    fn visit_fn_decl(&mut self, fn_decl: &FnDecl) {
+        visit_fn_decl(self, fn_decl)
+    }
+    fn visit_fn_input(&mut self, fn_input: &FnInput) {
+        visit_fn_input(self, fn_input)
+    }
+    fn visit_trait(&mut self, trait_: &Trait) {
+        visit_trait(self, trait_)
+    }
+    fn visit_trait_alias(&mut self, trait_alias: &TraitAlias) {
+        visit_trait_alias(self, trait_alias)
+    }
+    fn visit_impl(&mut self, imp: &Impl) {
+        visit_impl(self, imp)
+    }
+    fn visit_import(&mut self, import: &Import) {
+        visit_import(self, import)
+    }
+    fn visit_proc_macro(&mut self, proc_macro: &ProcMacro) {
+        visit_proc_macro(self, proc_macro)
+    }
+    fn visit_macro_kind(&mut self, macro_kind: &MacroKind) {}
+    fn visit_typedef(&mut self, typedef: &Typedef) {
+        visit_typedef(self, typedef)
+    }
+    fn visit_opaque_ty(&mut self, opaque_ty: &OpaqueTy) {
+        visit_opaque_ty(self, opaque_ty)
+    }
+    fn visit_static(&mut self, statik: &Static) {
+        visit_static(self, statik)
+    }
+    fn visit_primitive(&mut self, primitive: &Primitive) {
+        visit_primitive(self, primitive)
+    }
+}
 pub fn visit_crate(vis: &mut (impl Visitor + ?Sized), krate: &Crate) {
     vis.visit_module(&krate.root);
     for all_items in &krate.all_items {
@@ -504,147 +647,5 @@ pub fn visit_static(vis: &mut (impl Visitor + ?Sized), statik: &Static) {
 pub fn visit_primitive(vis: &mut (impl Visitor + ?Sized), primitive: &Primitive) {
     for impls in &primitive.impls {
         vis.visit_identifiable(impls);
-    }
-}
-pub trait Visitor {
-    fn visit_crate(&mut self, krate: &Crate) {
-        visit_crate(self, krate)
-    }
-    fn visit_identifiable(&mut self, identifiable: &Identifiable) {
-        visit_identifiable(self, identifiable)
-    }
-    fn visit_external_crate(&mut self, external_crate: &ExternalCrate) {}
-    fn visit_item_summary(&mut self, item_summary: &ItemSummary) {
-        visit_item_summary(self, item_summary)
-    }
-    fn visit_item_meta(&mut self, item_meta: &ItemMeta) {
-        visit_item_meta(self, item_meta)
-    }
-    fn visit_span(&mut self, span: &Span) {}
-    fn visit_deprecation(&mut self, deprecation: &Deprecation) {}
-    fn visit_visibility(&mut self, visibility: &Visibility) {
-        visit_visibility(self, visibility)
-    }
-    fn visit_dyn_trait(&mut self, dyn_trait: &DynTrait) {
-        visit_dyn_trait(self, dyn_trait)
-    }
-    fn visit_poly_trait(&mut self, poly_trait: &PolyTrait) {
-        visit_poly_trait(self, poly_trait)
-    }
-    fn visit_generic_args(&mut self, generic_args: &GenericArgs) {
-        visit_generic_args(self, generic_args)
-    }
-    fn visit_generic_arg(&mut self, generic_arg: &GenericArg) {
-        visit_generic_arg(self, generic_arg)
-    }
-    fn visit_constant_item(&mut self, constant_item: &ConstantItem) {
-        visit_constant_item(self, constant_item)
-    }
-    fn visit_constant(&mut self, constant: &Constant) {
-        visit_constant(self, constant)
-    }
-    fn visit_type_binding(&mut self, type_binding: &TypeBinding) {
-        visit_type_binding(self, type_binding)
-    }
-    fn visit_type_binding_kind(&mut self, type_binding_kind: &TypeBindingKind) {
-        visit_type_binding_kind(self, type_binding_kind)
-    }
-    fn visit_item_kind(&mut self, item_kind: &ItemKind) {}
-    fn visit_item(&mut self, item: &Item) {
-        visit_item(self, item)
-    }
-    fn visit_module(&mut self, module: &Module) {
-        visit_module(self, module)
-    }
-    fn visit_union(&mut self, union: &Union) {
-        visit_union(self, union)
-    }
-    fn visit_struct(&mut self, struct_: &Struct) {
-        visit_struct(self, struct_)
-    }
-    fn visit_struct_kind(&mut self, struct_kind: &StructKind) {
-        visit_struct_kind(self, struct_kind)
-    }
-    fn visit_struct_field(&mut self, struct_field: &StructField) {
-        visit_struct_field(self, struct_field)
-    }
-    fn visit_enum(&mut self, enum_: &Enum) {
-        visit_enum(self, enum_)
-    }
-    fn visit_variant(&mut self, variant: &Variant) {
-        visit_variant(self, variant)
-    }
-    fn visit_variant_kind(&mut self, variant_kind: &VariantKind) {
-        visit_variant_kind(self, variant_kind)
-    }
-    fn visit_discriminant(&mut self, discriminant: &Discriminant) {}
-    fn visit_header(&mut self, header: &Header) {
-        visit_header(self, header)
-    }
-    fn visit_abi(&mut self, abi: &Abi) {}
-    fn visit_function(&mut self, function: &Function) {
-        visit_function(self, function)
-    }
-    fn visit_generics(&mut self, generics: &Generics) {
-        visit_generics(self, generics)
-    }
-    fn visit_generic_param_def(&mut self, generic_param_def: &GenericParamDef) {
-        visit_generic_param_def(self, generic_param_def)
-    }
-    fn visit_generic_param_def_kind(&mut self, generic_param_def_kind: &GenericParamDefKind) {
-        visit_generic_param_def_kind(self, generic_param_def_kind)
-    }
-    fn visit_where_predicate(&mut self, where_predicate: &WherePredicate) {
-        visit_where_predicate(self, where_predicate)
-    }
-    fn visit_generic_bound(&mut self, generic_bound: &GenericBound) {
-        visit_generic_bound(self, generic_bound)
-    }
-    fn visit_trait_bound_modifier(&mut self, trait_bound_modifier: &TraitBoundModifier) {}
-    fn visit_term(&mut self, term: &Term) {
-        visit_term(self, term)
-    }
-    fn visit_type(&mut self, ty: &Type) {
-        visit_type(self, ty)
-    }
-    fn visit_path(&mut self, path: &Path) {
-        visit_path(self, path)
-    }
-    fn visit_function_pointer(&mut self, function_pointer: &FunctionPointer) {
-        visit_function_pointer(self, function_pointer)
-    }
-    fn visit_fn_decl(&mut self, fn_decl: &FnDecl) {
-        visit_fn_decl(self, fn_decl)
-    }
-    fn visit_fn_input(&mut self, fn_input: &FnInput) {
-        visit_fn_input(self, fn_input)
-    }
-    fn visit_trait(&mut self, trait_: &Trait) {
-        visit_trait(self, trait_)
-    }
-    fn visit_trait_alias(&mut self, trait_alias: &TraitAlias) {
-        visit_trait_alias(self, trait_alias)
-    }
-    fn visit_impl(&mut self, imp: &Impl) {
-        visit_impl(self, imp)
-    }
-    fn visit_import(&mut self, import: &Import) {
-        visit_import(self, import)
-    }
-    fn visit_proc_macro(&mut self, proc_macro: &ProcMacro) {
-        visit_proc_macro(self, proc_macro)
-    }
-    fn visit_macro_kind(&mut self, macro_kind: &MacroKind) {}
-    fn visit_typedef(&mut self, typedef: &Typedef) {
-        visit_typedef(self, typedef)
-    }
-    fn visit_opaque_ty(&mut self, opaque_ty: &OpaqueTy) {
-        visit_opaque_ty(self, opaque_ty)
-    }
-    fn visit_static(&mut self, statik: &Static) {
-        visit_static(self, statik)
-    }
-    fn visit_primitive(&mut self, primitive: &Primitive) {
-        visit_primitive(self, primitive)
     }
 }

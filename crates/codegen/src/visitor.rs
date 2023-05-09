@@ -64,13 +64,6 @@ impl Visitor for VisitorGenerator {
             default.visit_identifiable(item);
         }
 
-        quote!(self.output,
-            use crate::heap_types::*;
-            pub use crate::utils::CycleDetector;
-
-            #out
-        );
-
         let mut inner = TokenStream::default();
         for item in &module.items {
             VisitorGen {
@@ -81,9 +74,16 @@ impl Visitor for VisitorGenerator {
         }
 
         quote!(self.output,
+            #![allow(clippy::single_match, unused_variables, unreachable_patterns)]
+
+            use crate::heap_types::*;
+            pub use crate::utils::CycleDetector;
+
             pub trait Visitor {
                 #inner
             }
+
+            #out
         );
     }
 }
@@ -228,7 +228,7 @@ impl<'a> Visitor for DefaultVisitor<'a> {
         let mut at_least_one_field = false;
         let fields: Vec<_> = match &struct_.kind {
             StructKind::Unit => Default::default(),
-            StructKind::Tuple(fields) => fields.into_iter().filter_map(|f| f.as_ref()).collect(),
+            StructKind::Tuple(fields) => fields.iter().filter_map(|f| f.as_ref()).collect(),
             StructKind::Plain { fields, .. } => fields.iter().collect(),
         };
         let body = self.branch(|f| {
@@ -391,7 +391,7 @@ impl Visitor for TypeVisitor {
         if self.ty.is_some() {
             return;
         }
-        if let Some(_) = r.target.clone().as_item() {
+        if r.target.clone().as_item().is_some() {
             self.ty = Some(FieldInfo {
                 name: r.name.clone(),
                 process: vec![FieldProcess::Use],
@@ -399,7 +399,7 @@ impl Visitor for TypeVisitor {
             return;
         }
         if let Some(args) = r.args.as_ref() {
-            self.visit_generic_args(&args);
+            self.visit_generic_args(args);
         }
 
         if let Some(ty) = self.ty.as_mut() {
