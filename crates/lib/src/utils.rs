@@ -22,6 +22,11 @@ impl CycleDetector {
         self.visited.insert(id.clone());
         false
     }
+
+    pub fn remove_from_visited(&mut self, item: &Item) {
+        let id = &item.meta().id;
+        self.visited.remove(id);
+    }
 }
 
 pub trait ArcExt<T>: Sized {

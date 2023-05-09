@@ -39,19 +39,7 @@ fn main() -> anyhow::Result<()> {
 
     finder.visit_crate(&krate);
 
-    let visitor = &finder.visitor.output;
-    let default = &finder.visitor.default.output;
-    // let default = "";
-    let full_visitor = pretty_print(quote::quote!(
-        use crate::heap_types::*;
-        pub use crate::utils::CycleDetector;
-
-        pub trait Visitor {
-            #visitor
-        }
-
-        #default
-    ))?;
+    let full_visitor = pretty_print(&finder.visitor.output)?;
 
     let static_items = &finder.static_items.output;
     let static_items = pretty_print(quote::quote!(
@@ -80,7 +68,7 @@ fn main() -> anyhow::Result<()> {
 
     write_file("crates/lib/src/types.rs", &static_items)?;
     write_file("crates/lib/src/imp.rs", &imp)?;
-    write_file("crates/lib/src/visitor.rs", &full_visitor)?;
+    write_file("crates/lib/src/new_visitor.rs", &full_visitor)?;
 
     Ok(())
 }

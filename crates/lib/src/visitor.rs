@@ -570,6 +570,9 @@ pub fn visit_type(vis: &mut (impl Visitor + ?Sized), ty: &Type) {
 }
 pub fn visit_path(vis: &mut (impl Visitor + ?Sized), path: &Path) {
     vis.visit_identifiable(&path.target);
+    if let Some(args) = path.args.as_ref() {
+        vis.visit_generic_args(&args);
+    }
 }
 pub fn visit_function_pointer(
     vis: &mut (impl Visitor + ?Sized),
