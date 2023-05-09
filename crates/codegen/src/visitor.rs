@@ -387,7 +387,7 @@ impl Visitor for TypeVisitor {
 
         erised::visitor::visit_struct_field(self, struct_field);
     }
-    fn visit_resolved_path(&mut self, r: &Path) {
+    fn visit_path(&mut self, r: &Path) {
         if self.ty.is_some() {
             return;
         }

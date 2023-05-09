@@ -5,7 +5,7 @@ pub mod codegen_input;
 // And this is an output of the codegen pass
 
 mod imp;
-pub mod new_visitor;
+// pub mod new_visitor;
 pub mod types;
 pub mod visitor;
 
