@@ -384,7 +384,6 @@ impl<'a> Visitor for FieldVisitor<'a> {
                 let inner = self.branch(|fv| {
                     fv.trailing_comma = true;
                     for _0 in t {
-                        dbg!("tuple!");
                         fv.visit_type(_0);
                     }
                 });

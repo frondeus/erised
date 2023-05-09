@@ -68,7 +68,7 @@ fn main() -> anyhow::Result<()> {
 
     write_file("crates/lib/src/types.rs", &static_items)?;
     write_file("crates/lib/src/imp.rs", &imp)?;
-    write_file("crates/lib/src/new_visitor.rs", &full_visitor)?;
+    write_file("crates/lib/src/visitor.rs", &full_visitor)?;
 
     Ok(())
 }
