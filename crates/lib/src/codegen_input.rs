@@ -719,6 +719,8 @@ pub struct Import {
 
 #[derive(Debug, Clone, TypeInfo)]
 pub struct ProcMacro {
+    pub meta: ItemMeta,
+    pub name: String,
     pub kind: MacroKind,
     pub helpers: Vec<String>,
 }

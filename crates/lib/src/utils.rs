@@ -78,7 +78,7 @@ impl Item {
             Item::Static(v) => &v.meta,
             Item::ForeignType => todo!(),
             Item::Macro { meta, .. } => meta,
-            Item::ProcMacro(_v) => todo!(),
+            Item::ProcMacro(v) => &v.meta,
             Item::Primitive(_v) => todo!(),
             Item::AssocConst { meta, .. } => meta,
             Item::AssocType { meta, .. } => meta,

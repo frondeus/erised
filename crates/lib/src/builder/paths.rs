@@ -68,7 +68,9 @@ impl Builder {
         Ok(match arg {
             rustdoc_types::GenericArg::Lifetime(l) => GenericArg::Lifetime(l.clone()),
             rustdoc_types::GenericArg::Type(ty) => GenericArg::Type(self.build_type(cache, ty)?),
-            rustdoc_types::GenericArg::Const(_) => todo!(),
+            rustdoc_types::GenericArg::Const(co) => {
+                GenericArg::Const(self.build_constant(cache, co)?)
+            }
             rustdoc_types::GenericArg::Infer => GenericArg::Infer,
         })
     }

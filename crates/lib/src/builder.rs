@@ -1,11 +1,13 @@
 use std::{
     collections::{BTreeMap, HashMap},
+    io::Read,
     path::PathBuf,
     sync::{Arc, Weak},
 };
 
 use crate::heap_types::*;
 use rustdoc_types::Id;
+use serde::Deserialize;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -19,8 +21,12 @@ pub enum Error {
     #[error(transparent)]
     IO(#[from] std::io::Error),
 
-    #[error(transparent)]
-    JSON(#[from] serde_json::Error),
+    #[error("Could not parse the JSON")]
+    JSON(
+        #[from]
+        #[source]
+        serde_json::Error,
+    ),
 
     #[error("Could not find item with id: {0:?}")]
     CouldNotFind(rustdoc_types::Id),
@@ -71,6 +77,7 @@ pub struct BuilderOpts {
     pub package: Option<String>,
     pub package_target: PackageTarget,
     pub document_private_items: bool,
+    pub document_hidden_items: bool,
     pub cap_lints: Option<String>,
     pub crate_replacement: Option<CrateReplacement>,
 }
@@ -112,6 +119,7 @@ impl Default for BuilderOpts {
             package: None,
             package_target: PackageTarget::default(),
             document_private_items: false,
+            document_hidden_items: true,
             cap_lints: Some("warn".to_owned()),
             crate_replacement: None,
         }
@@ -133,6 +141,7 @@ impl From<BuilderOpts> for rustdoc_json::Builder {
             package,
             package_target,
             document_private_items,
+            document_hidden_items,
             cap_lints,
             crate_replacement: _,
         }: BuilderOpts,
@@ -145,6 +154,7 @@ impl From<BuilderOpts> for rustdoc_json::Builder {
             .all_features(all_features)
             .features(features)
             .document_private_items(document_private_items)
+            .document_hidden_items(document_hidden_items)
             .cap_lints(cap_lints)
             .package_target(package_target.into());
 
@@ -272,6 +282,13 @@ impl BuilderOpts {
         self
     }
 
+    /// Whether to pass `--document-hidden-items` to `cargo rustdoc`. Default: `false`
+    #[must_use]
+    pub fn document_hidden_items(mut self, document_hidden_items: bool) -> Self {
+        self.document_hidden_items = document_hidden_items;
+        self
+    }
+
     /// What to pass as `--cap-lints` to rustdoc JSON build command
     #[must_use]
     pub fn cap_lints(mut self, cap_lints: Option<impl AsRef<str>>) -> Self {
@@ -283,9 +300,17 @@ impl BuilderOpts {
         let crate_replacement = self.crate_replacement.clone();
         let builder: rustdoc_json::Builder = self.into();
         let json_path = builder.build()?;
-        let file = std::fs::OpenOptions::new().read(true).open(json_path)?;
+        let mut file = std::fs::OpenOptions::new().read(true).open(json_path)?;
 
-        let source: rustdoc_types::Crate = serde_json::from_reader(file)?;
+        // let source: rustdoc_types::Crate = serde_json::from_reader(file)?;
+        let mut buf = Vec::new();
+        file.read_to_end(&mut buf)?;
+        let mut deserializer = serde_json::Deserializer::from_slice(&buf);
+        deserializer.disable_recursion_limit();
+        let deserializer = serde_stacker::Deserializer::new(&mut deserializer);
+        let source = rustdoc_types::Crate::deserialize(deserializer)?;
+        // let source: rustdoc_types::Crate = serde_json::from_slice(&buf)?;
+
         if source.format_version != FORMAT_VERSION {
             return Err(Error::VersionMismatch {
                 expected: FORMAT_VERSION,

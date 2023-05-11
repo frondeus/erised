@@ -16,6 +16,7 @@ mod impls;
 mod imports;
 mod modules;
 mod opaque_types;
+mod proc_macros;
 mod statics;
 mod structs;
 mod traits;
@@ -113,7 +114,9 @@ impl Builder {
                 meta,
                 expr: m.clone(),
             }),
-            rustdoc_types::ItemEnum::ProcMacro(_) => todo!("proc macro"),
+            rustdoc_types::ItemEnum::ProcMacro(mac) => Ok(Item::ProcMacro(
+                self.build_proc_macro(cache, name, meta, mac)?,
+            )),
             rustdoc_types::ItemEnum::Primitive(_) => todo!("primitive"),
             rustdoc_types::ItemEnum::AssocConst { type_, default } => Ok(Item::AssocConst {
                 meta,
