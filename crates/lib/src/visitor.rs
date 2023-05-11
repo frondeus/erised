@@ -626,6 +626,7 @@ pub fn visit_import(vis: &mut (impl Visitor + ?Sized), import: &Import) {
     }
 }
 pub fn visit_proc_macro(vis: &mut (impl Visitor + ?Sized), proc_macro: &ProcMacro) {
+    vis.visit_item_meta(&proc_macro.meta);
     vis.visit_macro_kind(&proc_macro.kind);
 }
 pub fn visit_typedef(vis: &mut (impl Visitor + ?Sized), typedef: &Typedef) {

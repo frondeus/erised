@@ -151,6 +151,7 @@ impl From<BuildArgs> for erised::builder::BuilderOpts {
                 }
             },
             document_private_items: reflect_private_items,
+            document_hidden_items: true,
             cap_lints,
             crate_replacement: {
                 match (

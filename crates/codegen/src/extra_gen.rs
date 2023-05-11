@@ -62,6 +62,7 @@ impl Visitor for ExtraGenerator {
                             let mut fv = Typper {
                                 codegen,
                                 trailing_comma: true,
+                                amp: true,
                             };
                             for field in fields {
                                 if let Some(field) = field.as_ref() {
@@ -81,6 +82,7 @@ impl Visitor for ExtraGenerator {
                             let mut fv = Typper {
                                 codegen,
                                 trailing_comma: true,
+                                amp: true,
                             };
 
                             for field in fields {
@@ -175,7 +177,7 @@ impl Visitor for ExtraGenerator {
                 });
 
                 quote!(codegen.output,
-                    pub fn #fn_name(self) -> Option<#ty> {
+                    pub fn #fn_name(&self) -> Option<#ty> {
                         match self {
                             Self::#variant_name #destruct => Some(#construct),
                             _ => None
@@ -266,6 +268,10 @@ impl<'a> Visitor for Constructor<'a> {
 
         // let hash = Punct::new('#', Spacing::Joint);
         // let hashed_name = quote::quote!(#hash #name);
+        let is_primitive = field.ty.as_primitive().is_some();
+        if is_primitive {
+            quote!(self.codegen.output, *);
+        }
 
         quote!(self.codegen.output, #name );
 
@@ -277,6 +283,7 @@ impl<'a> Visitor for Constructor<'a> {
 struct Typper<'a> {
     codegen: &'a mut ExtraGenerator,
     trailing_comma: bool,
+    amp: bool,
 }
 
 impl<'a> Typper<'a> {
@@ -293,9 +300,15 @@ impl<'a> Typper<'a> {
             let mut field_visitor = Typper {
                 codegen,
                 trailing_comma: true,
+                amp: false,
             };
             f(&mut field_visitor);
         })
+    }
+    fn amp(&mut self) {
+        if self.amp {
+            quote!(self.codegen.output, &);
+        }
     }
 }
 
@@ -313,6 +326,7 @@ impl<'a> Visitor for Typper<'a> {
             Type::ResolvedPath(path) => match &path.target {
                 Identifiable::Item(_) => {
                     let name = format_ident!("{}", path.name);
+                    self.amp();
                     quote!(self.codegen.output, #name);
                 }
                 Identifiable::Summary(_) => {
@@ -327,12 +341,14 @@ impl<'a> Visitor for Typper<'a> {
                         }
                     };
                     let name = format_ident!("{}", path.name);
+                    self.amp();
                     quote!(self.codegen.output, #name #args);
                 }
             },
             Type::DynTrait(_) => todo!(),
             Type::Generic(s) => {
                 let s = format_ident!("{}", s);
+                self.amp();
                 quote!(
                     self.codegen.output,
                     #s
@@ -340,11 +356,14 @@ impl<'a> Visitor for Typper<'a> {
             }
             Type::Primitive(u) => {
                 let u = format_ident!("{u}");
+                // self.amp(); // TODO: remove
                 quote!(self.codegen.output, #u);
             }
             Type::FunctionPointer(_) => todo!(),
             Type::Tuple(t) => {
+                let current_amp = self.amp;
                 let inner = self.branch(|fv| {
+                    fv.amp = current_amp;
                     for _0 in t {
                         fv.visit_type(_0);
                     }

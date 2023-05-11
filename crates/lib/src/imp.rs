@@ -1232,10 +1232,18 @@ impl quote::ToTokens for Import {
 }
 impl erised::destruct::ToTokens for ProcMacro {
     fn to_tokens(&self, paths: &mut erised::destruct::ItemsPaths) -> proc_macro2::TokenStream {
-        let &Self { kind, helpers, .. } = &self;
+        let &Self {
+            meta,
+            name,
+            kind,
+            helpers,
+            ..
+        } = &self;
+        let meta = erised::destruct::ToTokens::to_tokens(meta, paths);
+        let name = erised::destruct::ToTokens::to_tokens(name, paths);
         let kind = erised::destruct::ToTokens::to_tokens(kind, paths);
         let helpers = erised::destruct::ToTokens::to_tokens(helpers, paths);
-        quote :: quote ! (erised :: types :: ProcMacro { kind : #kind , helpers : #helpers , })
+        quote :: quote ! (erised :: types :: ProcMacro { meta : #meta , name : #name , kind : #kind , helpers : #helpers , })
     }
 }
 impl quote::ToTokens for ProcMacro {
@@ -1348,13 +1356,13 @@ impl quote::ToTokens for Primitive {
     }
 }
 impl Identifiable {
-    pub fn as_item(self) -> Option<Weak<Item>> {
+    pub fn as_item(&self) -> Option<&Weak<Item>> {
         match self {
             Self::Item(_0) => Some(_0),
             _ => None,
         }
     }
-    pub fn as_summary(self) -> Option<Arc<ItemSummary>> {
+    pub fn as_summary(&self) -> Option<&Arc<ItemSummary>> {
         match self {
             Self::Summary(_0) => Some(_0),
             _ => None,
@@ -1362,145 +1370,145 @@ impl Identifiable {
     }
 }
 impl ItemKind {
-    pub fn as_module(self) -> Option<()> {
+    pub fn as_module(&self) -> Option<()> {
         match self {
             Self::Module => Some(()),
             _ => None,
         }
     }
-    pub fn as_extern_crate(self) -> Option<()> {
+    pub fn as_extern_crate(&self) -> Option<()> {
         match self {
             Self::ExternCrate => Some(()),
             _ => None,
         }
     }
-    pub fn as_import(self) -> Option<()> {
+    pub fn as_import(&self) -> Option<()> {
         match self {
             Self::Import => Some(()),
             _ => None,
         }
     }
-    pub fn as_struct(self) -> Option<()> {
+    pub fn as_struct(&self) -> Option<()> {
         match self {
             Self::Struct => Some(()),
             _ => None,
         }
     }
-    pub fn as_struct_field(self) -> Option<()> {
+    pub fn as_struct_field(&self) -> Option<()> {
         match self {
             Self::StructField => Some(()),
             _ => None,
         }
     }
-    pub fn as_union(self) -> Option<()> {
+    pub fn as_union(&self) -> Option<()> {
         match self {
             Self::Union => Some(()),
             _ => None,
         }
     }
-    pub fn as_enum(self) -> Option<()> {
+    pub fn as_enum(&self) -> Option<()> {
         match self {
             Self::Enum => Some(()),
             _ => None,
         }
     }
-    pub fn as_variant(self) -> Option<()> {
+    pub fn as_variant(&self) -> Option<()> {
         match self {
             Self::Variant => Some(()),
             _ => None,
         }
     }
-    pub fn as_function(self) -> Option<()> {
+    pub fn as_function(&self) -> Option<()> {
         match self {
             Self::Function => Some(()),
             _ => None,
         }
     }
-    pub fn as_typedef(self) -> Option<()> {
+    pub fn as_typedef(&self) -> Option<()> {
         match self {
             Self::Typedef => Some(()),
             _ => None,
         }
     }
-    pub fn as_opaque_ty(self) -> Option<()> {
+    pub fn as_opaque_ty(&self) -> Option<()> {
         match self {
             Self::OpaqueTy => Some(()),
             _ => None,
         }
     }
-    pub fn as_constant(self) -> Option<()> {
+    pub fn as_constant(&self) -> Option<()> {
         match self {
             Self::Constant => Some(()),
             _ => None,
         }
     }
-    pub fn as_trait(self) -> Option<()> {
+    pub fn as_trait(&self) -> Option<()> {
         match self {
             Self::Trait => Some(()),
             _ => None,
         }
     }
-    pub fn as_trait_alias(self) -> Option<()> {
+    pub fn as_trait_alias(&self) -> Option<()> {
         match self {
             Self::TraitAlias => Some(()),
             _ => None,
         }
     }
-    pub fn as_impl(self) -> Option<()> {
+    pub fn as_impl(&self) -> Option<()> {
         match self {
             Self::Impl => Some(()),
             _ => None,
         }
     }
-    pub fn as_static(self) -> Option<()> {
+    pub fn as_static(&self) -> Option<()> {
         match self {
             Self::Static => Some(()),
             _ => None,
         }
     }
-    pub fn as_foreign_type(self) -> Option<()> {
+    pub fn as_foreign_type(&self) -> Option<()> {
         match self {
             Self::ForeignType => Some(()),
             _ => None,
         }
     }
-    pub fn as_macro(self) -> Option<()> {
+    pub fn as_macro(&self) -> Option<()> {
         match self {
             Self::Macro => Some(()),
             _ => None,
         }
     }
-    pub fn as_proc_attribute(self) -> Option<()> {
+    pub fn as_proc_attribute(&self) -> Option<()> {
         match self {
             Self::ProcAttribute => Some(()),
             _ => None,
         }
     }
-    pub fn as_proc_derive(self) -> Option<()> {
+    pub fn as_proc_derive(&self) -> Option<()> {
         match self {
             Self::ProcDerive => Some(()),
             _ => None,
         }
     }
-    pub fn as_assoc_const(self) -> Option<()> {
+    pub fn as_assoc_const(&self) -> Option<()> {
         match self {
             Self::AssocConst => Some(()),
             _ => None,
         }
     }
-    pub fn as_assoc_type(self) -> Option<()> {
+    pub fn as_assoc_type(&self) -> Option<()> {
         match self {
             Self::AssocType => Some(()),
             _ => None,
         }
     }
-    pub fn as_primitive(self) -> Option<()> {
+    pub fn as_primitive(&self) -> Option<()> {
         match self {
             Self::Primitive => Some(()),
             _ => None,
         }
     }
-    pub fn as_keyword(self) -> Option<()> {
+    pub fn as_keyword(&self) -> Option<()> {
         match self {
             Self::Keyword => Some(()),
             _ => None,
@@ -1508,25 +1516,25 @@ impl ItemKind {
     }
 }
 impl Visibility {
-    pub fn as_public(self) -> Option<()> {
+    pub fn as_public(&self) -> Option<()> {
         match self {
             Self::Public => Some(()),
             _ => None,
         }
     }
-    pub fn as_default(self) -> Option<()> {
+    pub fn as_default(&self) -> Option<()> {
         match self {
             Self::Default => Some(()),
             _ => None,
         }
     }
-    pub fn as_crate(self) -> Option<()> {
+    pub fn as_crate(&self) -> Option<()> {
         match self {
             Self::Crate => Some(()),
             _ => None,
         }
     }
-    pub fn as_restricted(self) -> Option<(Identifiable, String)> {
+    pub fn as_restricted(&self) -> Option<(&Identifiable, &String)> {
         match self {
             Self::Restricted { parent, path } => Some((parent, path)),
             _ => None,
@@ -1534,13 +1542,13 @@ impl Visibility {
     }
 }
 impl GenericArgs {
-    pub fn as_angle_bracketed(self) -> Option<(Vec<GenericArg>, Vec<TypeBinding>)> {
+    pub fn as_angle_bracketed(&self) -> Option<(&Vec<GenericArg>, &Vec<TypeBinding>)> {
         match self {
             Self::AngleBracketed { args, bindings } => Some((args, bindings)),
             _ => None,
         }
     }
-    pub fn as_parenthesized(self) -> Option<(Vec<Type>, Option<Type>)> {
+    pub fn as_parenthesized(&self) -> Option<(&Vec<Type>, &Option<Type>)> {
         match self {
             Self::Parenthesized { inputs, output } => Some((inputs, output)),
             _ => None,
@@ -1548,23 +1556,23 @@ impl GenericArgs {
     }
 }
 impl GenericParamDefKind {
-    pub fn as_lifetime(self) -> Option<Vec<String>> {
+    pub fn as_lifetime(&self) -> Option<&Vec<String>> {
         match self {
             Self::Lifetime { outlives } => Some(outlives),
             _ => None,
         }
     }
-    pub fn as_type(self) -> Option<(Vec<GenericBound>, Option<Type>, bool)> {
+    pub fn as_type(&self) -> Option<(&Vec<GenericBound>, &Option<Type>, bool)> {
         match self {
             Self::Type {
                 bounds,
                 default,
                 synthetic,
-            } => Some((bounds, default, synthetic)),
+            } => Some((bounds, default, *synthetic)),
             _ => None,
         }
     }
-    pub fn as_const(self) -> Option<(Type, Option<String>)> {
+    pub fn as_const(&self) -> Option<(&Type, &Option<String>)> {
         match self {
             Self::Const { type_, default } => Some((type_, default)),
             _ => None,
@@ -1572,25 +1580,25 @@ impl GenericParamDefKind {
     }
 }
 impl GenericArg {
-    pub fn as_lifetime(self) -> Option<String> {
+    pub fn as_lifetime(&self) -> Option<&String> {
         match self {
             Self::Lifetime(_0) => Some(_0),
             _ => None,
         }
     }
-    pub fn as_type(self) -> Option<Type> {
+    pub fn as_type(&self) -> Option<&Type> {
         match self {
             Self::Type(_0) => Some(_0),
             _ => None,
         }
     }
-    pub fn as_const(self) -> Option<Constant> {
+    pub fn as_const(&self) -> Option<&Constant> {
         match self {
             Self::Const(_0) => Some(_0),
             _ => None,
         }
     }
-    pub fn as_infer(self) -> Option<()> {
+    pub fn as_infer(&self) -> Option<()> {
         match self {
             Self::Infer => Some(()),
             _ => None,
@@ -1598,83 +1606,83 @@ impl GenericArg {
     }
 }
 impl Type {
-    pub fn as_resolved_path(self) -> Option<Path> {
+    pub fn as_resolved_path(&self) -> Option<&Path> {
         match self {
             Self::ResolvedPath(_0) => Some(_0),
             _ => None,
         }
     }
-    pub fn as_dyn_trait(self) -> Option<DynTrait> {
+    pub fn as_dyn_trait(&self) -> Option<&DynTrait> {
         match self {
             Self::DynTrait(_0) => Some(_0),
             _ => None,
         }
     }
-    pub fn as_generic(self) -> Option<String> {
+    pub fn as_generic(&self) -> Option<&String> {
         match self {
             Self::Generic(_0) => Some(_0),
             _ => None,
         }
     }
-    pub fn as_primitive(self) -> Option<String> {
+    pub fn as_primitive(&self) -> Option<&String> {
         match self {
             Self::Primitive(_0) => Some(_0),
             _ => None,
         }
     }
-    pub fn as_function_pointer(self) -> Option<Box<FunctionPointer>> {
+    pub fn as_function_pointer(&self) -> Option<&Box<FunctionPointer>> {
         match self {
             Self::FunctionPointer(_0) => Some(_0),
             _ => None,
         }
     }
-    pub fn as_tuple(self) -> Option<Vec<Type>> {
+    pub fn as_tuple(&self) -> Option<&Vec<Type>> {
         match self {
             Self::Tuple(_0) => Some(_0),
             _ => None,
         }
     }
-    pub fn as_slice(self) -> Option<Box<Type>> {
+    pub fn as_slice(&self) -> Option<&Box<Type>> {
         match self {
             Self::Slice(_0) => Some(_0),
             _ => None,
         }
     }
-    pub fn as_array(self) -> Option<(Box<Type>, String)> {
+    pub fn as_array(&self) -> Option<(&Box<Type>, &String)> {
         match self {
             Self::Array { type_, len } => Some((type_, len)),
             _ => None,
         }
     }
-    pub fn as_impl_trait(self) -> Option<Vec<GenericBound>> {
+    pub fn as_impl_trait(&self) -> Option<&Vec<GenericBound>> {
         match self {
             Self::ImplTrait(_0) => Some(_0),
             _ => None,
         }
     }
-    pub fn as_infer(self) -> Option<()> {
+    pub fn as_infer(&self) -> Option<()> {
         match self {
             Self::Infer => Some(()),
             _ => None,
         }
     }
-    pub fn as_raw_pointer(self) -> Option<(bool, Box<Type>)> {
+    pub fn as_raw_pointer(&self) -> Option<(bool, &Box<Type>)> {
         match self {
-            Self::RawPointer { mutable, type_ } => Some((mutable, type_)),
+            Self::RawPointer { mutable, type_ } => Some((*mutable, type_)),
             _ => None,
         }
     }
-    pub fn as_borrowed_ref(self) -> Option<(Option<String>, bool, Box<Type>)> {
+    pub fn as_borrowed_ref(&self) -> Option<(&Option<String>, bool, &Box<Type>)> {
         match self {
             Self::BorrowedRef {
                 lifetime,
                 mutable,
                 type_,
-            } => Some((lifetime, mutable, type_)),
+            } => Some((lifetime, *mutable, type_)),
             _ => None,
         }
     }
-    pub fn as_qualified_path(self) -> Option<(String, Box<GenericArgs>, Box<Type>, Path)> {
+    pub fn as_qualified_path(&self) -> Option<(&String, &Box<GenericArgs>, &Box<Type>, &Path)> {
         match self {
             Self::QualifiedPath {
                 name,
@@ -1687,13 +1695,13 @@ impl Type {
     }
 }
 impl TypeBindingKind {
-    pub fn as_equality(self) -> Option<Term> {
+    pub fn as_equality(&self) -> Option<&Term> {
         match self {
             Self::Equality(_0) => Some(_0),
             _ => None,
         }
     }
-    pub fn as_constraint(self) -> Option<Vec<GenericBound>> {
+    pub fn as_constraint(&self) -> Option<&Vec<GenericBound>> {
         match self {
             Self::Constraint(_0) => Some(_0),
             _ => None,
@@ -1701,115 +1709,115 @@ impl TypeBindingKind {
     }
 }
 impl Item {
-    pub fn as_module(self) -> Option<Module> {
+    pub fn as_module(&self) -> Option<&Module> {
         match self {
             Self::Module(_0) => Some(_0),
             _ => None,
         }
     }
-    pub fn as_extern_crate(self) -> Option<(ItemMeta, String, Option<String>)> {
+    pub fn as_extern_crate(&self) -> Option<(&ItemMeta, &String, &Option<String>)> {
         match self {
             Self::ExternCrate { meta, name, rename } => Some((meta, name, rename)),
             _ => None,
         }
     }
-    pub fn as_import(self) -> Option<Import> {
+    pub fn as_import(&self) -> Option<&Import> {
         match self {
             Self::Import(_0) => Some(_0),
             _ => None,
         }
     }
-    pub fn as_union(self) -> Option<Union> {
+    pub fn as_union(&self) -> Option<&Union> {
         match self {
             Self::Union(_0) => Some(_0),
             _ => None,
         }
     }
-    pub fn as_struct(self) -> Option<Struct> {
+    pub fn as_struct(&self) -> Option<&Struct> {
         match self {
             Self::Struct(_0) => Some(_0),
             _ => None,
         }
     }
-    pub fn as_enum(self) -> Option<Enum> {
+    pub fn as_enum(&self) -> Option<&Enum> {
         match self {
             Self::Enum(_0) => Some(_0),
             _ => None,
         }
     }
-    pub fn as_function(self) -> Option<Function> {
+    pub fn as_function(&self) -> Option<&Function> {
         match self {
             Self::Function(_0) => Some(_0),
             _ => None,
         }
     }
-    pub fn as_trait(self) -> Option<Trait> {
+    pub fn as_trait(&self) -> Option<&Trait> {
         match self {
             Self::Trait(_0) => Some(_0),
             _ => None,
         }
     }
-    pub fn as_trait_alias(self) -> Option<TraitAlias> {
+    pub fn as_trait_alias(&self) -> Option<&TraitAlias> {
         match self {
             Self::TraitAlias(_0) => Some(_0),
             _ => None,
         }
     }
-    pub fn as_impl(self) -> Option<Impl> {
+    pub fn as_impl(&self) -> Option<&Impl> {
         match self {
             Self::Impl(_0) => Some(_0),
             _ => None,
         }
     }
-    pub fn as_typedef(self) -> Option<Typedef> {
+    pub fn as_typedef(&self) -> Option<&Typedef> {
         match self {
             Self::Typedef(_0) => Some(_0),
             _ => None,
         }
     }
-    pub fn as_opaque_ty(self) -> Option<OpaqueTy> {
+    pub fn as_opaque_ty(&self) -> Option<&OpaqueTy> {
         match self {
             Self::OpaqueTy(_0) => Some(_0),
             _ => None,
         }
     }
-    pub fn as_constant(self) -> Option<ConstantItem> {
+    pub fn as_constant(&self) -> Option<&ConstantItem> {
         match self {
             Self::Constant(_0) => Some(_0),
             _ => None,
         }
     }
-    pub fn as_static(self) -> Option<Static> {
+    pub fn as_static(&self) -> Option<&Static> {
         match self {
             Self::Static(_0) => Some(_0),
             _ => None,
         }
     }
-    pub fn as_foreign_type(self) -> Option<()> {
+    pub fn as_foreign_type(&self) -> Option<()> {
         match self {
             Self::ForeignType => Some(()),
             _ => None,
         }
     }
-    pub fn as_macro(self) -> Option<(String, ItemMeta, String)> {
+    pub fn as_macro(&self) -> Option<(&String, &ItemMeta, &String)> {
         match self {
             Self::Macro { name, meta, expr } => Some((name, meta, expr)),
             _ => None,
         }
     }
-    pub fn as_proc_macro(self) -> Option<ProcMacro> {
+    pub fn as_proc_macro(&self) -> Option<&ProcMacro> {
         match self {
             Self::ProcMacro(_0) => Some(_0),
             _ => None,
         }
     }
-    pub fn as_primitive(self) -> Option<Primitive> {
+    pub fn as_primitive(&self) -> Option<&Primitive> {
         match self {
             Self::Primitive(_0) => Some(_0),
             _ => None,
         }
     }
-    pub fn as_assoc_const(self) -> Option<(ItemMeta, Type, Option<String>)> {
+    pub fn as_assoc_const(&self) -> Option<(&ItemMeta, &Type, &Option<String>)> {
         match self {
             Self::AssocConst {
                 meta,
@@ -1819,7 +1827,9 @@ impl Item {
             _ => None,
         }
     }
-    pub fn as_assoc_type(self) -> Option<(ItemMeta, Generics, Vec<GenericBound>, Option<Type>)> {
+    pub fn as_assoc_type(
+        &self,
+    ) -> Option<(&ItemMeta, &Generics, &Vec<GenericBound>, &Option<Type>)> {
         match self {
             Self::AssocType {
                 meta,
@@ -1832,7 +1842,7 @@ impl Item {
     }
 }
 impl WherePredicate {
-    pub fn as_bound_predicate(self) -> Option<(Type, Vec<GenericBound>, Vec<GenericParamDef>)> {
+    pub fn as_bound_predicate(&self) -> Option<(&Type, &Vec<GenericBound>, &Vec<GenericParamDef>)> {
         match self {
             Self::BoundPredicate {
                 type_,
@@ -1842,13 +1852,13 @@ impl WherePredicate {
             _ => None,
         }
     }
-    pub fn as_region_predicate(self) -> Option<(String, Vec<GenericBound>)> {
+    pub fn as_region_predicate(&self) -> Option<(&String, &Vec<GenericBound>)> {
         match self {
             Self::RegionPredicate { lifetime, bounds } => Some((lifetime, bounds)),
             _ => None,
         }
     }
-    pub fn as_eq_predicate(self) -> Option<(Type, Term)> {
+    pub fn as_eq_predicate(&self) -> Option<(&Type, &Term)> {
         match self {
             Self::EqPredicate { lhs, rhs } => Some((lhs, rhs)),
             _ => None,
@@ -1856,107 +1866,107 @@ impl WherePredicate {
     }
 }
 impl StructKind {
-    pub fn as_unit(self) -> Option<()> {
+    pub fn as_unit(&self) -> Option<()> {
         match self {
             Self::Unit => Some(()),
             _ => None,
         }
     }
-    pub fn as_tuple(self) -> Option<Vec<Option<StructField>>> {
+    pub fn as_tuple(&self) -> Option<&Vec<Option<StructField>>> {
         match self {
             Self::Tuple(_0) => Some(_0),
             _ => None,
         }
     }
-    pub fn as_plain(self) -> Option<(Vec<StructField>, bool)> {
+    pub fn as_plain(&self) -> Option<(&Vec<StructField>, bool)> {
         match self {
             Self::Plain {
                 fields,
                 fields_stripped,
-            } => Some((fields, fields_stripped)),
+            } => Some((fields, *fields_stripped)),
             _ => None,
         }
     }
 }
 impl VariantKind {
-    pub fn as_plain(self) -> Option<()> {
+    pub fn as_plain(&self) -> Option<()> {
         match self {
             Self::Plain => Some(()),
             _ => None,
         }
     }
-    pub fn as_tuple(self) -> Option<Vec<Option<StructField>>> {
+    pub fn as_tuple(&self) -> Option<&Vec<Option<StructField>>> {
         match self {
             Self::Tuple(_0) => Some(_0),
             _ => None,
         }
     }
-    pub fn as_struct(self) -> Option<(Vec<StructField>, bool)> {
+    pub fn as_struct(&self) -> Option<(&Vec<StructField>, bool)> {
         match self {
             Self::Struct {
                 fields,
                 fields_stripped,
-            } => Some((fields, fields_stripped)),
+            } => Some((fields, *fields_stripped)),
             _ => None,
         }
     }
 }
 impl Abi {
-    pub fn as_rust(self) -> Option<()> {
+    pub fn as_rust(&self) -> Option<()> {
         match self {
             Self::Rust => Some(()),
             _ => None,
         }
     }
-    pub fn as_c(self) -> Option<bool> {
+    pub fn as_c(&self) -> Option<bool> {
         match self {
-            Self::C { unwind } => Some(unwind),
+            Self::C { unwind } => Some(*unwind),
             _ => None,
         }
     }
-    pub fn as_cdecl(self) -> Option<bool> {
+    pub fn as_cdecl(&self) -> Option<bool> {
         match self {
-            Self::Cdecl { unwind } => Some(unwind),
+            Self::Cdecl { unwind } => Some(*unwind),
             _ => None,
         }
     }
-    pub fn as_stdcall(self) -> Option<bool> {
+    pub fn as_stdcall(&self) -> Option<bool> {
         match self {
-            Self::Stdcall { unwind } => Some(unwind),
+            Self::Stdcall { unwind } => Some(*unwind),
             _ => None,
         }
     }
-    pub fn as_fastcall(self) -> Option<bool> {
+    pub fn as_fastcall(&self) -> Option<bool> {
         match self {
-            Self::Fastcall { unwind } => Some(unwind),
+            Self::Fastcall { unwind } => Some(*unwind),
             _ => None,
         }
     }
-    pub fn as_aapcs(self) -> Option<bool> {
+    pub fn as_aapcs(&self) -> Option<bool> {
         match self {
-            Self::Aapcs { unwind } => Some(unwind),
+            Self::Aapcs { unwind } => Some(*unwind),
             _ => None,
         }
     }
-    pub fn as_win_64(self) -> Option<bool> {
+    pub fn as_win_64(&self) -> Option<bool> {
         match self {
-            Self::Win64 { unwind } => Some(unwind),
+            Self::Win64 { unwind } => Some(*unwind),
             _ => None,
         }
     }
-    pub fn as_sys_v64(self) -> Option<bool> {
+    pub fn as_sys_v64(&self) -> Option<bool> {
         match self {
-            Self::SysV64 { unwind } => Some(unwind),
+            Self::SysV64 { unwind } => Some(*unwind),
             _ => None,
         }
     }
-    pub fn as_system(self) -> Option<bool> {
+    pub fn as_system(&self) -> Option<bool> {
         match self {
-            Self::System { unwind } => Some(unwind),
+            Self::System { unwind } => Some(*unwind),
             _ => None,
         }
     }
-    pub fn as_other(self) -> Option<String> {
+    pub fn as_other(&self) -> Option<&String> {
         match self {
             Self::Other(_0) => Some(_0),
             _ => None,
@@ -1964,7 +1974,7 @@ impl Abi {
     }
 }
 impl GenericBound {
-    pub fn as_trait_bound(self) -> Option<(Path, Vec<GenericParamDef>, TraitBoundModifier)> {
+    pub fn as_trait_bound(&self) -> Option<(&Path, &Vec<GenericParamDef>, &TraitBoundModifier)> {
         match self {
             Self::TraitBound {
                 trait_,
@@ -1974,7 +1984,7 @@ impl GenericBound {
             _ => None,
         }
     }
-    pub fn as_outlives(self) -> Option<String> {
+    pub fn as_outlives(&self) -> Option<&String> {
         match self {
             Self::Outlives(_0) => Some(_0),
             _ => None,
@@ -1982,19 +1992,19 @@ impl GenericBound {
     }
 }
 impl TraitBoundModifier {
-    pub fn as_none(self) -> Option<()> {
+    pub fn as_none(&self) -> Option<()> {
         match self {
             Self::None => Some(()),
             _ => None,
         }
     }
-    pub fn as_maybe(self) -> Option<()> {
+    pub fn as_maybe(&self) -> Option<()> {
         match self {
             Self::Maybe => Some(()),
             _ => None,
         }
     }
-    pub fn as_maybe_const(self) -> Option<()> {
+    pub fn as_maybe_const(&self) -> Option<()> {
         match self {
             Self::MaybeConst => Some(()),
             _ => None,
@@ -2002,13 +2012,13 @@ impl TraitBoundModifier {
     }
 }
 impl Term {
-    pub fn as_type(self) -> Option<Type> {
+    pub fn as_type(&self) -> Option<&Type> {
         match self {
             Self::Type(_0) => Some(_0),
             _ => None,
         }
     }
-    pub fn as_constant(self) -> Option<Constant> {
+    pub fn as_constant(&self) -> Option<&Constant> {
         match self {
             Self::Constant(_0) => Some(_0),
             _ => None,
@@ -2016,19 +2026,19 @@ impl Term {
     }
 }
 impl MacroKind {
-    pub fn as_bang(self) -> Option<()> {
+    pub fn as_bang(&self) -> Option<()> {
         match self {
             Self::Bang => Some(()),
             _ => None,
         }
     }
-    pub fn as_attr(self) -> Option<()> {
+    pub fn as_attr(&self) -> Option<()> {
         match self {
             Self::Attr => Some(()),
             _ => None,
         }
     }
-    pub fn as_derive(self) -> Option<()> {
+    pub fn as_derive(&self) -> Option<()> {
         match self {
             Self::Derive => Some(()),
             _ => None,

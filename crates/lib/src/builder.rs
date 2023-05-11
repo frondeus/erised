@@ -337,14 +337,10 @@ impl BuilderOpts {
 impl Builder {
     pub fn build(self) -> Result<Crate> {
         let mut cache = Default::default();
-        let root = (*self
-            .get_item(&mut cache, &self.source.root)?
-            .upgrade()
-            .expect("Module"))
-        .clone()
-        .as_module()
-        .expect("Module")
-        .into();
+        let root = self.get_item(&mut cache, &self.source.root)?;
+        let root = root.upgrade().expect("Module");
+        let root = root.as_module().expect("Module");
+        let root = root.clone().into();
 
         let all_items: BTreeMap<String, Arc<Item>> =
             cache.items.into_iter().map(|(k, v)| (k.0, v)).collect();

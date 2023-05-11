@@ -1098,6 +1098,8 @@ pub struct Import {
 }
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 pub struct ProcMacro {
+    pub meta: ItemMeta,
+    pub name: &'static str,
     pub kind: MacroKind,
     pub helpers: &'static [&'static str],
 }
