@@ -391,7 +391,7 @@ impl Visitor for TypeVisitor {
         if self.ty.is_some() {
             return;
         }
-        if r.target.clone().as_item().is_some() {
+        if r.target.as_item().is_some() {
             self.ty = Some(FieldInfo {
                 name: r.name.clone(),
                 process: vec![FieldProcess::Use],
